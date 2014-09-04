@@ -1,0 +1,9 @@
+*.obj
+*.pch
+*.pdb
+*.idb
+*.htm
+/bin/
+/debug/
+/release/
+*.suo
