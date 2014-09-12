@@ -12,10 +12,11 @@
 #include <DCompute/worker.h>
 #include <DCompute/client.h>
 #include <DCompute/task.h>
+#include <DCompute/util.h>
 
 using namespace DCompute;
 
-class Task1
+class Task1 : public cex::Interface
 {
 public:
 	Task1()
@@ -28,7 +29,7 @@ public:
 
 	int result;
 
-	String book;
+	std::string book;
 
 	void Do()
 	{
@@ -53,7 +54,7 @@ GF_SERIALIZE_MEMBER(book)
 GF_END_SERIALIZE_IMPL
 
 GF_CLASS_VERSION(Task1, 1)
-GF_TYPE_REFLECTION_DCTASK(Task1)
+REGIST_DELTA_CREATOR(Task1, Task1)
 
 using namespace DCompute;
 
@@ -64,18 +65,22 @@ CEX_TEST(TaskTest)
 {
 	int cpu = Util::DetectNumberOfProcessor();
 
-	CJoberServer server;
-	server.create();
-	server.start();
+	auto server = cex::DeltaCreateRef<IJoberServer>();
+	server->create();
+	server->start();
 
 	{
-		CWorker worker[WORKERSIZE];
+		std::shared_ptr<IWorker> worker[WORKERSIZE];
+		for (int i=0; i<WORKERSIZE; ++i)
+		{
+			worker[i] = cex::DeltaCreateRef<IWorker>();
+		}
 
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
-			worker[i].id = i;
-			worker[i].create();
-			worker[i].start();
+			worker[i]->setID(i);
+			worker[i]->create();
+			cex::DeltaQueryInterface<CThreadProxy>(worker[i])->start();
 		}
 
 		size_t workerSize = Util::GetWorkerSize();
@@ -97,7 +102,7 @@ CEX_TEST(TaskTest)
 
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
-			worker[i].stop();
+			cex::DeltaQueryInterface<CThreadProxy>(worker[i])->stop();
 		}
 	}
 
@@ -105,5 +110,5 @@ CEX_TEST(TaskTest)
 
 	//Sleep(1000000000);
 
-	server.stop();
+	server->stop();
 }

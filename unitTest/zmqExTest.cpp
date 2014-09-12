@@ -38,37 +38,32 @@ CEX_TEST(ZmqExTest)
 		assert(msgSize==strlen(msgSend));
 		//delete msg;
 
-		char* msgRecv1=NULL;
-		int recvSize = ZmqEx::Recv(rep, msgRecv1);
-		printf(msgRecv1);
-		assert(strcmp(msgRecv1, msgSend)==0);
-		ZmqEx::Free(msgRecv1);
+		std::string msgRecv1 = ZmqEx::Recv(rep)->data();
+		printf(msgRecv1.data());
+		assert(msgRecv1 == msgSend);
 
-		recvSize = ZmqEx::Send(rep, "ok");
+		int recvSize = ZmqEx::Send(rep, "ok", 2);
 
-		char* msgRecv2=NULL;
-		recvSize = ZmqEx::Recv(req, msgRecv2);
-		assert(strcmp(msgRecv2, "ok")==0);
-		ZmqEx::Free(msgRecv2);
+		std::string msgRecv2 = ZmqEx::Recv(req)->data();
+		assert(msgRecv2 == "ok");
 	}
 
 
 	// test send file
 	{
-		String testFileName = "../bin/debug/testfile.tmp";
-		bool bRet = ZmqEx::SendFile(req, testFileName);
+		std::string testFileName = "../bin/debug/testfile.tmp";
+		bool bRet = ZmqEx::SendFile(req, testFileName.data());
 		assert(bRet==true);
 
-		String recvFileName;
-		Util::CreateUniqueTempFile(recvFileName);
-		bRet = ZmqEx::RecvFile(rep, recvFileName);
+		std::string recvFileName = Util::CreateUniqueTempFile()->data();
+		bRet = ZmqEx::Recv2File(rep, recvFileName.data());
 		assert(bRet==true);
 
 		FILE* sendFile=fopen(testFileName.data(), "rb");
 		FILE* recvFile=fopen(recvFileName.data(), "rb");
 
-		size_t length1 = filelength( fileno(sendFile) );
-		size_t length2 = filelength( fileno(recvFile) );
+		size_t length1 = _filelength( _fileno(sendFile) );
+		size_t length2 = _filelength( _fileno(recvFile) );
 		assert(length1==length2);
 
 		char pbufferSend[ZMQ_SEND_ONCE_MAX];
@@ -88,7 +83,7 @@ CEX_TEST(ZmqExTest)
 		fclose(sendFile);
 		fclose(recvFile);
 
-		Util::DeleteTempFile(recvFileName);
+		Util::DeleteTempFile(recvFileName.data());
 	}
 
 

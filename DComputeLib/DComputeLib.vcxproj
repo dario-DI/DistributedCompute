@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ReferencePath>D:\loadcode\boost_1_56_0\boost_1_56_0\stage\lib;..\debug\;$(ReferencePath)</ReferencePath>
-    <IncludePath>..\;D:\loadcode\boost_1_56_0\boost_1_56_0;..\..\cppextlib\;..\3rdparty\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\loadcode\boost_1_56_0\boost_1_56_0;..\;..\..\cppextlib\;..\3rdparty\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -62,7 +62,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>..\3rdparty\lib\Win32\libzmq_d.lib;..\3rdparty\lib\Win32\cppExtLib.lib;..\debug\libboost_serialization-vc110-mt-sgd-1_56.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\3rdparty\lib\Win32\libzmq_d.lib;..\3rdparty\lib\Win32\cppExtLib.lib;..\3rdparty\lib\Win32\libboost_serialization-vc110-mt-sgd-1_56.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcprtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
@@ -71,7 +71,8 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>AfterCopyDebug.bat</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

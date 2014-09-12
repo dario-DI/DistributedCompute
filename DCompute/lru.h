@@ -15,21 +15,17 @@
 
 namespace DCompute 
 {
-	class CLRURouter : public CRouterBase
+	class ILRURouter : public cex::Interface
 	{
 	public:
-		CLRURouter();
+		virtual void create()=0;
 
-		virtual ~CLRURouter();
+		virtual void destory()=0;
+	};
 
-		virtual void create();
-
-		virtual void destory();
-
-		virtual unsigned int run();
-
+	class DCOMPUTE_API LRURouterMethod
+	{
 	public:
-
 		static std::shared_ptr<cex::IString> ReciveAddress(void* socket);
 
 		static int SendAddress(void* socket, const char* addr);

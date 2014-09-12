@@ -78,7 +78,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
 		std::ostringstream ossm;
 		ossm << "tcp://" << address << ":" << DCOMPUTE_JOB_REPLY_PORT;
 		std::string replyAddr = ossm.str();
@@ -197,7 +197,7 @@ namespace DCompute {
 
 	//	return 0;
 	//}
-	REGIST_DELTA_INSTANCE(IReplyServer, CReplyServer);
+	REGIST_DELTA_CREATOR(IReplyServer, CReplyServer);
 
 	////////////////////////////////////////////////////////////////////////////////
 	// class CJoberServer
@@ -219,13 +219,13 @@ namespace DCompute {
 	private:
 		CReplyServer _reply;
 
-		CRouterBase* _router;
+		std::shared_ptr<ILRURouter> _router;
 	};
 
 	CJoberServer::CJoberServer()
 	{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		_router = new CLRURouter();
+		_router = cex::DeltaCreateRef<ILRURouter>();
 #else
 		_router = new CLBRouter();
 #endif
@@ -234,13 +234,7 @@ namespace DCompute {
 	CJoberServer::~CJoberServer()
 	{
 		_reply.stop();
-		_router->stop();
-
-		if(_router!=NULL)
-		{
-			delete _router;
-			_router=NULL;
-		}
+		cex::DeltaQueryInterface<CThreadProxy>(_router)->stop();
 	}
 
 	void CJoberServer::create()
@@ -251,7 +245,7 @@ namespace DCompute {
 
 	bool CJoberServer::start()
 	{
-		_router->start();
+		cex::DeltaQueryInterface<CThreadProxy>(_router)->start();
 		_reply.start();
 
 		return true;
@@ -260,8 +254,10 @@ namespace DCompute {
 	bool CJoberServer::stop()
 	{
 		_reply.stop();
-		_router->stop();
+		cex::DeltaQueryInterface<CThreadProxy>(_router)->stop();
 
 		return true;
 	}
+
+	REGIST_DELTA_CREATOR(IJoberServer, CJoberServer);
 }

@@ -14,6 +14,29 @@
 
 namespace DCompute {
 
+	class CLRURouter : public ILRURouter, public CRouterBase
+	{
+	public:
+		CLRURouter();
+
+		virtual ~CLRURouter();
+
+		virtual void create();
+
+		virtual void destory();
+
+		virtual unsigned int run();
+
+	public:
+
+		static std::shared_ptr<cex::IString> ReciveAddress(void* socket);
+
+		static int SendAddress(void* socket, const char* addr);
+
+		static int SendReady(void* socket);
+
+	};
+
 	CLRURouter::CLRURouter()
 	{
 	}
@@ -27,7 +50,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
 
 		std::ostringstream oss;
 
@@ -94,7 +117,7 @@ namespace DCompute {
 		}
 	}
 
-	std::shared_ptr<cex::IString> CLRURouter::ReciveAddress(void* socket)
+	std::shared_ptr<cex::IString> LRURouterMethod::ReciveAddress(void* socket)
 	{
 		auto addr = cex::DeltaCreateRef<cex::IString>();
 
@@ -110,7 +133,7 @@ namespace DCompute {
 		return addr;
 	}
 
-	int CLRURouter::SendAddress(void* socket, const char* addr)
+	int LRURouterMethod::SendAddress(void* socket, const char* addr)
 	{
 		int len = strlen(addr);
 		int rc = zmq_send(socket,addr, len, ZMQ_SNDMORE);
@@ -121,7 +144,7 @@ namespace DCompute {
 		return 0;
 	}
 
-	int CLRURouter::SendReady(void* socket)
+	int LRURouterMethod::SendReady(void* socket)
 	{
 		int rc = zmq_send(socket, "READY", 5, ZMQ_SNDMORE);
 		assert(rc>=0);
@@ -157,14 +180,14 @@ namespace DCompute {
 
 			if (items [0].revents & ZMQ_POLLIN) 
 			{
-				std::shared_ptr<cex::IString> worker_addr = ReciveAddress(_backend);
+				std::shared_ptr<cex::IString> worker_addr = LRURouterMethod::ReciveAddress(_backend);
 				worker_queue.push(worker_addr->data()); 
 
-				std::shared_ptr<cex::IString> client_addr = ReciveAddress(_backend);
+				std::shared_ptr<cex::IString> client_addr = LRURouterMethod::ReciveAddress(_backend);
 
 				if ( client_addr->compare("READY") != 0 ) 
 				{
-					SendAddress(_frontend,  client_addr->data());
+					LRURouterMethod::SendAddress(_frontend,  client_addr->data());
 
 					rc = detail::ForwardMessage(_backend, _frontend, msg);
 					if (rc==-1) return rc;
@@ -179,7 +202,7 @@ namespace DCompute {
 					continue;
 				}
 
-				SendAddress(_backend,  worker_queue.front().data());
+				LRURouterMethod::SendAddress(_backend,  worker_queue.front().data());
 
 				rc = detail::ForwardMessage(_frontend, _backend, msg);
 				if (rc==-1) return rc;
@@ -190,4 +213,6 @@ namespace DCompute {
 
 		return 0;
 	}
+
+	REGIST_DELTA_CREATOR(ILRURouter, CLRURouter);
 }

@@ -89,9 +89,10 @@ public:
 
 	Stop* stops[2];
 
+	std::vector<Stop*> vtStop;
 private:
 
-	std::vector<Stop*> vtStop;
+	
 	int www;
 };
 

@@ -59,7 +59,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);		
 
 		char message[30];
@@ -82,7 +82,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::regist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 		
@@ -93,7 +93,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -116,7 +116,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::unregist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
@@ -126,7 +126,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -149,7 +149,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::getWorkerNumber;
 		//task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
@@ -228,7 +228,7 @@ namespace DCompute {
 
 	static bool GetConfigureJoberAddress(std::string& addr)
 	{
-		addr = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		addr = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
 
 		/*String strModulePath;
 		GetModulePath(0, strModulePath);
@@ -270,30 +270,9 @@ namespace DCompute {
 
 	/////////////////////////////////////////////////////////////////
 	// class CDComputeConfig
-	class CDComputeConfig : public IDComputeConfig
+	class CDComputeConfig
 	{
 	public:
-
-		virtual const char* getJoberAddress() const
-		{
-			return joberAddress.data();
-		}
-
-		virtual const char* getClientEndPoint() const
-		{
-			return clientEndPoint.data();
-		}
-
-		virtual const char* getWorkerEndPoint() const
-		{
-			return workerEndPoint.data();
-		}
-
-		virtual const char* getRequestEndPoint() const
-		{
-			return requestEndPoint.data();
-		}
-
 		std::string joberAddress;
 
 		std::string clientEndPoint;
@@ -301,7 +280,7 @@ namespace DCompute {
 
 		std::string requestEndPoint;
 
-	public:
+	private:
 
 		CDComputeConfig()
 		{
@@ -332,8 +311,39 @@ namespace DCompute {
 			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_REPLY_PORT;
 			requestEndPoint = oss.str().c_str();;
 		}
+
+	public:
+		static CDComputeConfig& Instance()
+		{
+			static CDComputeConfig s_CDComputeConfig;
+			return s_CDComputeConfig;
+		}
 	};
 	
+	class CDComputeConfigProxy : public IDComputeConfig
+	{
+	public:
 
-	REGIST_DELTA_INSTANCE(IDComputeConfig, CDComputeConfig);
+		virtual const char* getJoberAddress() const
+		{
+			return CDComputeConfig::Instance().joberAddress.data();
+		}
+
+		virtual const char* getClientEndPoint() const
+		{
+			return CDComputeConfig::Instance().clientEndPoint.data();
+		}
+
+		virtual const char* getWorkerEndPoint() const
+		{
+			return CDComputeConfig::Instance().workerEndPoint.data();
+		}
+
+		virtual const char* getRequestEndPoint() const
+		{
+			return CDComputeConfig::Instance().requestEndPoint.data();
+		}
+	};
+
+	REGIST_DELTA_CREATOR(IDComputeConfig, CDComputeConfigProxy);
 }

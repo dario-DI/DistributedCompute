@@ -50,7 +50,7 @@ CClient::CClient() :
 _context(0),
 _client(0)
 {
-	_endPoint = cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint();
+	_endPoint = cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint();
 }
 
 CClient::~CClient()
@@ -123,7 +123,7 @@ bool CClient::recieveResult(int doNotWait)
 	return true;*/
 }
 
-REGIST_DELTA_INSTANCE(IClient, CClient);
+REGIST_DELTA_CREATOR(IClient, CClient);
 
 ////////////////////////////////////////////////////////////
 // class CClientThread
@@ -179,7 +179,7 @@ bool CClientThread::create()
 	_context = zmq_init(1);
 
 	_client = zmq_socket (_context, ZMQ_REQ);
-	int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
+	int rc = zmq_connect(_client, cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 
@@ -265,6 +265,6 @@ unsigned int CClientThread::run()
 	//return 0;
 }
 
-REGIST_DELTA_INSTANCE(IClientThread, CClientThread);
+REGIST_DELTA_CREATOR(IClientThread, CClientThread);
 
 }

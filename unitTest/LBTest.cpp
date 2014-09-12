@@ -14,7 +14,7 @@
 
 using namespace DCompute;
 
-class Client : public CThreadBase
+class Client : public CThreadProxy
 {
 public:
 	Client()
@@ -27,7 +27,7 @@ public:
 		sprintf(clientAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_CLIENT_PORT);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, CDComputeConfig::Instance()->clientEndPoint.data());
+		int rc = zmq_connect(_client, cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint());
 		//int rc = zmq_connect(_client, clientAdress);
 		assert(rc==0);
 	}
@@ -56,8 +56,7 @@ protected:
 			int recvSize = ZmqEx::Send(_client, msgSend, strlen(msgSend));
 
 			//  wait for reply
-			String data;
-			recvSize = ZmqEx::Recv(_client, data);
+			std::string data = ZmqEx::Recv(_client)->data();
 
 			size_t npos = data.find(msgSend);
 			assert(npos<data.length());
@@ -77,7 +76,7 @@ protected:
 	}
 };
 
-class Worker : public CThreadBase
+class Worker : public CThreadProxy
 {
 public:
 	Worker()
@@ -90,7 +89,7 @@ public:
 		sprintf(workerAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_WORKER_PORT);
 
 		_worker = zmq_socket (_context, ZMQ_REP);
-		int rc = zmq_connect(_worker, CDComputeConfig::Instance()->workerEndPoint.data());
+		int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
 		//int rc = zmq_connect(_worker, workerAdress);
 		assert(rc==0);
 		//int jj = zmq_errno();
@@ -100,7 +99,6 @@ public:
 
 	~Worker()
 	{
-		setDone();
 		zmq_close(_worker);
 		zmq_term(_context);
 	}
@@ -122,13 +120,12 @@ protected:
 		{
 			++counter;
 
-			String data;
-			size_t recvSize = ZmqEx::Recv(_worker, data);
+			std::string data = ZmqEx::Recv(_worker)->data();
 
 			char msgSend[60];
 			sprintf(msgSend, "worker:%d->%s\n", id, data.data());
 
-			recvSize = ZmqEx::Send(_worker, msgSend, strlen(msgSend));
+			int recvSize = ZmqEx::Send(_worker, msgSend, strlen(msgSend));
 			assert(recvSize==strlen(msgSend));
 		}
 
@@ -141,9 +138,9 @@ protected:
 
 CEX_TEST(LBTest)
 {
-	CLBRouter server;
-	server.create();
-	server.start();
+	auto server = cex::DeltaCreateRef<ILBRouter>();
+	server->create();
+	cex::DeltaQueryInterface<CThreadProxy>(server)->start();
 
 	if(0)
 	{
@@ -262,11 +259,10 @@ CEX_TEST(LBTest1)
 		assert(recvSize==0);
 
 		// data
-		char* data;
-		recvSize = ZmqEx::Recv(_worker, data);
+		std::string data = ZmqEx::Recv(_worker)->data();
 
 		printf ("Received request: [%s]\n", clientAdress);
-		printf(data);
+		printf(data.data());
 
 		// send result
 		recvSize = zmq_send(_worker, clientAdress, strlen(clientAdress), ZMQ_SNDMORE);
@@ -302,10 +298,9 @@ CEX_TEST(LBTest1)
 
 	{
 		//  wait for reply
-		char* data;
-		size_t recvSize = ZmqEx::Recv(_client, data);
+		std::string data = ZmqEx::Recv(_client)->data();
 
-		printf(data);		
+		printf(data.data());		
 	}
 
 	Sleep(1000000);

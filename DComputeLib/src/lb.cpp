@@ -13,6 +13,20 @@
 
 namespace DCompute {
 
+	class CLBRouter : public ILBRouter, public CRouterBase
+	{
+	public:
+		CLBRouter();
+
+		virtual ~CLBRouter();
+
+		virtual void create();
+
+		virtual void destory();
+
+		virtual unsigned int run();
+	};
+
 	CLBRouter::CLBRouter()
 	{
 	}
@@ -26,7 +40,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
 
 		std::ostringstream oss;
 
@@ -133,4 +147,6 @@ namespace DCompute {
 		}
 		return 0;
 	}
+
+	REGIST_DELTA_CREATOR(ILBRouter, CLBRouter);
 }

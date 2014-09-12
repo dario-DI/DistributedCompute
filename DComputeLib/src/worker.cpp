@@ -22,7 +22,9 @@ namespace DCompute {
 
 		void destory();
 
-		int& getId() {return id;}
+		int getID() {return id;}
+
+		void setID(int id){this->id = id;}
 
 	protected:
 
@@ -55,7 +57,7 @@ bool CWorker::create()
 	_worker = zmq_socket (_context, ZMQ_REP);
 #endif
 
-	int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
+	int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 
@@ -82,13 +84,13 @@ void CWorker::destory()
 unsigned int CWorker::run()
 {
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-	CLRURouter::SendReady(_worker);
+	LRURouterMethod::SendReady(_worker);
 #endif
 
 	while(!_done)
 	{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		std::shared_ptr<cex::IString> client_addr = CLRURouter::ReciveAddress(_worker);
+		std::shared_ptr<cex::IString> client_addr = LRURouterMethod::ReciveAddress(_worker);
 #endif
 
 		// get task
@@ -104,7 +106,7 @@ unsigned int CWorker::run()
 		if (taskPtr==NULL)
 		{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-			CLRURouter::SendAddress(_worker, client_addr->data());
+			LRURouterMethod::SendAddress(_worker, client_addr->data());
 #endif
 			char* errorMsg = "Type reflection error.";
 			int nRet = ZmqEx::Send(_worker, errorMsg, strlen(errorMsg));
@@ -126,7 +128,7 @@ unsigned int CWorker::run()
 		taskPtr->result2File(strResultFile->data());
 
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		CLRURouter::SendAddress(_worker, client_addr->data());
+		LRURouterMethod::SendAddress(_worker, client_addr->data());
 #endif
 
 		// send result
@@ -147,6 +149,7 @@ unsigned int CWorker::run()
 	return 0;
 }
 
+REGIST_DELTA_CREATOR(IWorker, CWorker);
 
 //unsigned int CWorker::run()
 //{

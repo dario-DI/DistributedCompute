@@ -105,7 +105,7 @@ namespace DCompute {
 		fopen_s(&file, filename, "rb");
 		if ( file == NULL ) return false;
 
-		size_t length = filelength( fileno(file) );
+		size_t length = _filelength( _fileno(file) );
 
 		int sendSize = zmq_send (socket, &length, sizeof(length), ZMQ_SNDMORE);
 		assert(sendSize==sizeof(length));

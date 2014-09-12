@@ -30,7 +30,7 @@
 /// 声明能序列化
 #define GF_DECL_SERIALIZABLE(T) \
 	template<class Archive, const unsigned int N>friend \
-	void GF_serializer(Archive&, T&, const typename GF_version<N>);
+	void GF_serializer(Archive&, T&, const typename GF_version<N>&);
 
 ///// 声明当前序列化版本号
 //#define GF_SERIALIZE_VERSION(T, N) \

@@ -14,18 +14,12 @@
 
 namespace DCompute 
 {
-	class CLBRouter : public CRouterBase
+	class ILBRouter : public cex::Interface
 	{
 	public:
-		CLBRouter();
+		virtual void create()=0;
 
-		virtual ~CLBRouter();
-
-		virtual void create();
-
-		virtual void destory();
-
-		virtual unsigned int run();
+		virtual void destory()=0;
 	};
 }
 

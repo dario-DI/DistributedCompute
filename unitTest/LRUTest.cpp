@@ -6,17 +6,18 @@
 #include <assert.h>
 #include <fstream>
 
+#include <sstream>
 #include <zmq.h>
 //#include <DCompute/zmqEx.h>
-#include <DCompute/thread.h>
 #include "DCompute/util.h"
 
 #include <DCompute/lru.h>
+#include <cex/deltareflection.h>
 using namespace DCompute;
 
 namespace Device{
 
-class Client : public CThreadBase
+class Client : public CThreadProxy
 {
 public:
 	Client()
@@ -26,7 +27,7 @@ public:
 		_context = zmq_init(1);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, CDComputeConfig::Instance()->clientEndPoint.data());
+		int rc = zmq_connect(_client, cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint());
 		//int rc = zmq_connect(_client, "tcp://127.0.0.1:5559");
 		assert(rc==0);
 	}
@@ -65,7 +66,7 @@ protected:
 	}
 };
 
-class Worker : public CThreadBase
+class Worker : public CThreadProxy
 {
 public:
 	Worker()
@@ -75,7 +76,7 @@ public:
 		_context = zmq_init(1);
 
 		_worker = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_worker, CDComputeConfig::Instance()->workerEndPoint.data());
+		int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
 		//int rc = zmq_connect (_worker, "tcp://127.0.0.1:5560");
 		assert(rc==0);
 
@@ -84,7 +85,6 @@ public:
 
 	~Worker()
 	{
-		setDone();
 		zmq_close(_worker);
 		zmq_term(_context);
 	}
@@ -99,7 +99,7 @@ protected:
 	{
 		//  告诉代理worker已经准备好
 		//zmq_send(_worker, "READY", 5, 0);
-		CLRURouter::SendReady(_worker);
+		LRURouterMethod::SendReady(_worker);
 
 		while (!_done) 
 		{
@@ -142,9 +142,9 @@ protected:
 
 CEX_TEST(LRUTest)
 {
-	CLRURouter router;
-	router.create();
-	router.start();
+	auto router = cex::DeltaCreateRef<ILRURouter>();
+	router->create();
+	cex::DeltaQueryInterface<CThreadProxy>(router)->start();
 
 	Device::Worker worker[WORKERSIZE];
 	Device::Client client[CLIENTSIZE];
@@ -172,7 +172,7 @@ CEX_TEST(LRUTest)
 		client[i].stop();
 	}
 
-	router.stop();
+	cex::DeltaQueryInterface<CThreadProxy>(router)->stop();
 }
 
 
@@ -181,19 +181,24 @@ CEX_TEST(LRUTest)
 
 CEX_TEST(LRUTest0)
 {
-	String address = CDComputeConfig::Instance()->joberAddress;
+	std::string address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
 
-	char frontendAdress[30];
-	sprintf(frontendAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_CLIENT_PORT);
-	char backendAdress[30];
-	sprintf(backendAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_WORKER_PORT);
+	std::ostringstream oss;
+
+	oss.clear();
+	oss << "tcp://" << address << ":" << DCOMPUTE_JOB_CLIENT_PORT;
+	std::string frontendAdress = oss.str().c_str();
+
+	oss.clear();
+	oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
+	std::string backendAdress = oss.str().c_str();;
 
 	//  准备0MQ上下文和套接字
 	void *context = zmq_init (1);
 	void *frontend = zmq_socket (context, ZMQ_ROUTER);
 	void *backend  = zmq_socket (context, ZMQ_ROUTER);
-	zmq_bind (frontend, frontendAdress);
-	zmq_bind (backend,  backendAdress);
+	zmq_bind (frontend, frontendAdress.data());
+	zmq_bind (backend,  backendAdress.data());
 
 	Device::Worker worker[WORKERSIZE];
 	Device::Client client[CLIENTSIZE];
