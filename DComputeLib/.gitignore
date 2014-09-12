@@ -14,11 +14,3 @@
 *.sdf
 *.filters
 *.sdf
-*.sdf
-*ncb
-
-/ClientTest/
-/WorkerTest/
-/JoberserverTest/
-/example_transPic_client/
-/example_transPic_worker/

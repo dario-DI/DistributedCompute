@@ -1,19 +1,15 @@
-#include "stdafx.h"
-#include <assert.h>
 
+#include <assert.h>
+#include <string>
 #include <DCompute/contracts.h>
 #include <DCompute/typeWrappers.h>
 #include <DCompute/joberServer.h>
 
-GF_TYPE_REFLECTION_DCTASK(DCompute::Contract::WorkerInfo);
+#include <DCompute/serializationInterface.h>
 
 namespace DCompute { namespace Contract {
 
-	WorkerInfo::WorkerInfo() : registType(regist), result(0)
-	{
-	}
-
-	WorkerInfo::~WorkerInfo()
+	WorkerInfo::WorkerInfo() : registType(registType), result(0)
 	{
 	}
 
@@ -23,7 +19,7 @@ namespace DCompute { namespace Contract {
 		{
 		case regist:
 			{
-				std::vector<String>& workers=CWokerCounter::Instance()->workers;
+				std::vector<std::string>& workers=CWokerCounter::Instance()->workers;
 				workers.push_back(id);
 				result = workers.size();
 				printf("regist worker: %s.\n", id.data());
@@ -31,8 +27,8 @@ namespace DCompute { namespace Contract {
 			break;
 		case unregist:
 			{
-				std::vector<String>& workers=CWokerCounter::Instance()->workers;
-				std::vector<String>::iterator itr = std::find(workers.begin(), workers.end(), id);
+				std::vector<std::string>& workers=CWokerCounter::Instance()->workers;
+				std::vector<std::string>::iterator itr = std::find(workers.begin(), workers.end(), id);
 				if (itr != workers.end() )
 				{
 					workers.erase(itr);
@@ -51,5 +47,12 @@ namespace DCompute { namespace Contract {
 			break;
 		}
 	}
+	//GF_BEGIN_SERIALIZE_IMPL_NOW(WorkerInfo, 1)
+	//GF_SERIALIZE_MEMBER(registType)
+	//GF_SERIALIZE_MEMBER(id)
+	//GF_END_SERIALIZE_IMPL
+} 
 
-} }
+}
+
+//GF_CLASS_VERSION(DCompute::Contract::WorkerInfo, 1)

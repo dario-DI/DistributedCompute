@@ -60,7 +60,7 @@ using namespace DCompute;
 #define WORKERSIZE 4
 #define TASKSIZE 40
 
-void TaskTest()
+CEX_TEST(TaskTest)
 {
 	int cpu = Util::DetectNumberOfProcessor();
 

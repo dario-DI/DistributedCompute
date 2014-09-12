@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
 #include <stdio.h>
@@ -10,11 +10,47 @@
 
 namespace DCompute {
 
+	class CClient : public IClient
+	{
+	public:
+		CClient();
+
+		~CClient();
+
+	public:
+
+		void setEndpoint(const char* endpoint) { _endPoint = endpoint; }
+
+
+		bool create();
+
+		void destory();
+
+
+		void setTaskFile(const char* filename) { _strTaskFile = filename; }
+
+		void setResultFile(const char* filename) { _strResultFile = filename; }
+
+
+		bool sendTask();
+
+		bool recieveResult(int doNotWait=0);
+
+	private:
+		std::string _endPoint;
+
+		void* _context;
+		void* _client;
+
+		std::string _strTaskFile;
+		std::string _strResultFile;
+	};
+
 CClient::CClient() : 
 _context(0),
 _client(0)
 {
-	_endPoint = CDComputeConfig::Instance()->clientEndPoint.data();
+	_endPoint = cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint();
 }
 
 CClient::~CClient()
@@ -49,14 +85,14 @@ void CClient::destory()
 
 bool CClient::sendTask()
 {
-	bool nRet = ZmqEx::SendFile(_client, _strTaskFile );
+	bool nRet = ZmqEx::SendFile(_client, _strTaskFile.data() );
 	assert(nRet==true);
 	return nRet;
 }
 
 bool CClient::recieveResult(int doNotWait)
 {
-	return ZmqEx::RecvFile(_client, _strResultFile, doNotWait);
+	return ZmqEx::Recv2File(_client, _strResultFile.data(), doNotWait);
 
 	/*void* socket = _client;
 	String& fileName = _strResultFile;
@@ -87,8 +123,41 @@ bool CClient::recieveResult(int doNotWait)
 	return true;*/
 }
 
+REGIST_DELTA_INSTANCE(IClient, CClient);
+
 ////////////////////////////////////////////////////////////
 // class CClientThread
+class CClientThread : public IClientThread, public CThreadProxy
+{
+public:
+public:
+	CClientThread();
+	~CClientThread();
+
+public:
+
+	bool create();
+
+	void destory();
+
+
+	void setTaskFile(const char* filename) { _strTaskFile = filename; }
+
+	const char* getResultFile() const;
+
+private:
+
+	virtual unsigned int run();
+
+private:
+
+	void* _context;
+	void* _client;
+
+	std::string _strTaskFile;
+	std::string _strResultFile;
+};
+
 CClientThread::CClientThread() : 
 _context(0),
 _client(0)
@@ -97,14 +166,12 @@ _client(0)
 
 CClientThread::~CClientThread()
 {
-	setDone();
-	if (isRunning()) Sleep(1000);
 	stop();
 
 	destory();
 
-	Util::DeleteTempFile( _strTaskFile );
-	Util::DeleteTempFile( _strResultFile );
+	Util::DeleteTempFile( _strTaskFile.data() );
+	Util::DeleteTempFile( _strResultFile.data() );
 }
 
 bool CClientThread::create()
@@ -112,11 +179,11 @@ bool CClientThread::create()
 	_context = zmq_init(1);
 
 	_client = zmq_socket (_context, ZMQ_REQ);
-	int rc = zmq_connect(_client, CDComputeConfig::Instance()->clientEndPoint.data());
+	int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 
-	Util::CreateUniqueTempFile(_strResultFile);
+	_strResultFile.assign(Util::CreateUniqueTempFile()->data());
 
 	return rc==0;
 }
@@ -134,21 +201,24 @@ void CClientThread::destory()
 }
 
 
-String CClientThread::getResultFile() const
+const char* CClientThread::getResultFile() const
 {
-	assert(!isRunning());
-	return _strResultFile;
+	//assert(!isRunning());
+	assert(_done);
+	return _strResultFile.data();
 }
 
-UINT CClientThread::run()
+unsigned int CClientThread::run()
 {
 	// send task
-	bool nRet = ZmqEx::SendFile(_client, _strTaskFile );
+	bool nRet = ZmqEx::SendFile(_client, _strTaskFile.data() );
 	assert(nRet==true);
 
 	// recieve result
-	nRet = ZmqEx::RecvFile(_client, _strResultFile);
+	nRet = ZmqEx::Recv2File(_client, _strResultFile.data());
 	assert(nRet==true);
+
+	_done = true;
 
 	return 0;
 
@@ -194,5 +264,7 @@ UINT CClientThread::run()
 
 	//return 0;
 }
+
+REGIST_DELTA_INSTANCE(IClientThread, CClientThread);
 
 }

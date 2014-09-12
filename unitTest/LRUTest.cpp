@@ -140,7 +140,7 @@ protected:
 #define WORKERSIZE 1
 #define CLIENTSIZE 1
 
-void LRUTest(void)
+CEX_TEST(LRUTest)
 {
 	CLRURouter router;
 	router.create();
@@ -179,7 +179,7 @@ void LRUTest(void)
 //  出队操作，使用一个可存储任何类型的数组实现
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
-void LRUTest0(void)
+CEX_TEST(LRUTest0)
 {
 	String address = CDComputeConfig::Instance()->joberAddress;
 

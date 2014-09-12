@@ -1,6 +1,7 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -20,16 +21,16 @@ namespace DCompute {
 	/*class CWokerCounter
 	{
 	public:
-		~CWokerCounter(){}
+	~CWokerCounter(){}
 
-		std::vector<String> workers;
+	std::vector<String> workers;
 
 	private:
-		CWokerCounter() {}
+	CWokerCounter() {}
 
-		static CWokerCounter* Instance();
+	static CWokerCounter* Instance();
 
-		friend class CReplyServer;
+	friend class CReplyServer;
 	};*/
 
 	CWokerCounter* CWokerCounter::Instance()
@@ -40,6 +41,28 @@ namespace DCompute {
 
 	///////////////////////////////////////////////
 	// class CReplyServer
+	class CReplyServer : public IReplyServer, public CThreadProxy
+	{
+	public:
+		CReplyServer();
+
+		~CReplyServer();
+
+	public:
+
+		void create();
+
+		void destory();
+
+	protected:
+
+		virtual unsigned int run();
+
+	private:
+		void* _context;
+		void* _reply;
+	};
+
 	CReplyServer::CReplyServer() : 
 		_context(0),
 		_reply(0)
@@ -55,13 +78,13 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		String address = CDComputeConfig::Instance()->joberAddress;
-
-		char replyAdress[30];
-		sprintf(replyAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_REPLY_PORT);
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		std::ostringstream ossm;
+		ossm << "tcp://" << address << ":" << DCOMPUTE_JOB_REPLY_PORT;
+		std::string replyAddr = ossm.str();
 
 		_reply = zmq_socket (_context,	ZMQ_REP);
-		int rc = zmq_bind (_reply, replyAdress);
+		int rc = zmq_bind (_reply, replyAddr.data());
 		assert(rc==0);
 	}
 
@@ -77,26 +100,26 @@ namespace DCompute {
 		_context=0;
 	}
 
-	UINT CReplyServer::run()
+	unsigned int CReplyServer::run()
 	{
 		while (!_done) 
 		{
-			String strTaskFile;
-			Util::CreateUniqueTempFile(strTaskFile);
+			auto strTaskFile = Util::CreateUniqueTempFile();
 
-			bool nRet = ZmqEx::RecvFile(_reply, strTaskFile);
+			bool nRet = ZmqEx::Recv2File(_reply, strTaskFile->data());
 			assert(nRet==true);
 
-			IType* ptr = TypeReflectorManager::ReflectFile2Object( strTaskFile );
-			IType_DCTask* taskPtr = Query<IType_DCTask*>(ptr);
+			auto ptr = ReflectFile2Object( strTaskFile->data() );
+			IDCTask* taskPtr = cex::DeltaQueryInterface<IDCTask>(ptr.get());
 			assert(taskPtr!=NULL);
 
 			if (taskPtr==NULL)
 			{
-				int nRet = ZmqEx::Send(_reply, "Type reflection error.");
+				char* errorMsg = "Type reflection error.";
+				int nRet = ZmqEx::Send(_reply, errorMsg, strlen(errorMsg));
 				assert(nRet>0);
 
-				Util::DeleteTempFile(strTaskFile);
+				Util::DeleteTempFile(strTaskFile->data());
 
 				Sleep(100);
 				continue;
@@ -104,11 +127,10 @@ namespace DCompute {
 
 			taskPtr->Do();
 
-			String strResultFile;
-			Util::CreateUniqueTempFile(strResultFile);
+			auto strResultFile = Util::CreateUniqueTempFile();
 
-			taskPtr->Result2File(strResultFile);
-			nRet = ZmqEx::SendFile(_reply, strResultFile);
+			taskPtr->result2File(strResultFile->data());
+			nRet = ZmqEx::SendFile(_reply, strResultFile->data());
 			assert(nRet==true);
 
 
@@ -117,14 +139,14 @@ namespace DCompute {
 #endif
 			Sleep(100);
 
-			Util::DeleteTempFile(strTaskFile);
-			Util::DeleteTempFile(strResultFile);
+			Util::DeleteTempFile(strTaskFile->data());
+			Util::DeleteTempFile(strResultFile->data());
 		}
 
 		return 0;
 	}
 
-	//UINT CReplyServer::run()
+	//unsigned int CReplyServer::run()
 	//{
 	//	while (!_done) 
 	//	{
@@ -175,9 +197,31 @@ namespace DCompute {
 
 	//	return 0;
 	//}
+	REGIST_DELTA_INSTANCE(IReplyServer, CReplyServer);
 
 	////////////////////////////////////////////////////////////////////////////////
 	// class CJoberServer
+	class CJoberServer : public IJoberServer
+	{
+	public:
+		CJoberServer();
+
+		~CJoberServer();
+
+	public:
+
+		void create();
+
+		bool start();
+
+		bool stop();
+
+	private:
+		CReplyServer _reply;
+
+		CRouterBase* _router;
+	};
+
 	CJoberServer::CJoberServer()
 	{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
@@ -189,8 +233,8 @@ namespace DCompute {
 
 	CJoberServer::~CJoberServer()
 	{
-		_reply.setDone();
-		_router->setDone();
+		_reply.stop();
+		_router->stop();
 
 		if(_router!=NULL)
 		{
@@ -215,11 +259,6 @@ namespace DCompute {
 
 	bool CJoberServer::stop()
 	{
-		_reply.setDone();
-		_router->setDone();
-
-		Sleep(1000);
-
 		_reply.stop();
 		_router->stop();
 

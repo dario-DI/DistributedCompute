@@ -1,0 +1,32 @@
+#ifndef DCOMPUTE_CONFIG
+#define DCOMPUTE_CONFIG 1
+
+#ifndef DCOMPUTELIB_EXPORTS
+#define DCOMPUTE_API __declspec(dllimport)
+#else
+#define DCOMPUTE_API __declspec(dllexport)
+#endif
+
+#define DCOMPUTE_LIB_VERSION 0
+
+#define DCOMPUTE_JOB_CLIENT_PORT	5559
+#define DCOMPUTE_JOB_WORKER_PORT	5560
+#define DCOMPUTE_JOB_REPLY_PORT		5561
+
+// route type
+#define DCOMPUTE_ROUTE_LB		1
+#define DCOMPUTE_ROUTE_LRU		2
+#define DCOMPUTE_ROUTE_TYPE		DCOMPUTE_ROUTE_LRU
+
+#define DC_REQ_REGIST_WORKER	"RegistWorker"
+#define DC_REQ_UNREGIST_WORKER	"UnRegistWorker"
+#define DC_REQ_WORKER_NUM		"WorkerNumber"
+
+#define DC_REP_VALID	"VALID"
+#define DC_REP_OK		"OK"
+#define DC_REP_NO		"NO"
+
+/// 消息一次发送最大字节
+#define ZMQ_SEND_ONCE_MAX	128 /*2048*/ 
+
+#endif

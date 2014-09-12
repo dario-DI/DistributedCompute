@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
 #include <zmq.h>
@@ -26,12 +26,12 @@ namespace DCompute {
 		}
 	}
 
-	int ZmqEx::Recv(void *socket, msgType& msg, int flags)
+	std::shared_ptr<cex::IString> ZmqEx::Recv(void *socket, int flags)
 	{
 		// read message length
 		size_t len;
 		int size = zmq_recv (socket, &len, sizeof(len), flags);	
-		if (size==-1) return -1;
+		if (size==-1) return nullptr;
 		MSG_ASSERT(size==sizeof(len));
 	
 		// read message
@@ -49,35 +49,23 @@ namespace DCompute {
 		//	assert(!more);
 		//}
 
-		msg=buf;
+		std::shared_ptr<cex::IString> revStr = cex::DeltaCreateRef<cex::IString>();
+		revStr->assign(buf);
 
-		return (int)len;
+		delete buf;
+
+		return revStr;
 	}
 
-	int ZmqEx::Recv(void *socket, String& msg, int flags)
-	{
-		char* buf;
-		int size = Recv(socket, buf, flags);
-		
-		msg.attach(buf, size);
-
-		return size;
-	}
-
-	void ZmqEx::Free( msgType& msg)
-	{
-		delete msg;
-		msg=NULL;
-	}
-
-	bool ZmqEx::RecvFile(void *socket, const String& fileName, int flags)
+	bool ZmqEx::Recv2File(void *socket, const char* filename, int flags)
 	{
 		size_t length;
 		int recvSize = zmq_recv (socket, &length, sizeof(length), flags);
 		if (recvSize==-1) return false; // no wait mode
 		MSG_ASSERT(recvSize==sizeof(length));
 
-		FILE* file = fopen(fileName.data(), "wb");
+		FILE* file = nullptr;
+		fopen_s(&file, filename, "wb");
 		if ( file == NULL ) return false;
 		
 		char pbuffer[ZMQ_SEND_ONCE_MAX];
@@ -111,14 +99,10 @@ namespace DCompute {
 		return size;
 	}
 
-	int ZmqEx::Send (void *socket, const String& data) 
+	bool ZmqEx::SendFile(void* socket, const char* filename)
 	{
-		return Send(socket, data.data(), data.length());
-	}
-
-	bool ZmqEx::SendFile(void* socket, const String& filename)
-	{
-		FILE* file = fopen(filename.data(), "rb");
+		FILE* file;
+		fopen_s(&file, filename, "rb");
 		if ( file == NULL ) return false;
 
 		size_t length = filelength( fileno(file) );

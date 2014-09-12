@@ -139,7 +139,7 @@ protected:
 #define WORKERSIZE 1
 #define CLIENTSIZE 10
 
-void LBTest()
+CEX_TEST(LBTest)
 {
 	CLBRouter server;
 	server.create();
@@ -201,7 +201,7 @@ void LBTest()
 	
 }
 
-void LBTest1()
+CEX_TEST(LBTest1)
 {
 	void* _context = zmq_init(1);
 

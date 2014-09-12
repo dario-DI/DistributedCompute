@@ -10,3 +10,7 @@
 #include <tchar.h>
 
 // TODO: reference additional headers your program requires here
+
+#include <cex/DeltaReflection.h>
+#include <cex/String.h>
+#include <cex/UnTest.h>

@@ -13,7 +13,7 @@
 
 using namespace DCompute;
 
-void ZmqExTest()
+CEX_TEST(ZmqExTest)
 {
 	//  Create the infrastructure
 	void *ctx = zmq_init (0);

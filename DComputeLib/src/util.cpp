@@ -1,10 +1,11 @@
-#include "stdafx.h"
 #include <assert.h>
+
+#include <sstream>
 
 #include <zmq.h>
 #include <DCompute/util.h>
 #include <DCompute/zmqEx.h>
-#include <DCompute/string.h>
+
 #include <DCompute/contracts.h>
 #include <DCompute/task.h>
 
@@ -53,12 +54,12 @@
 
 namespace DCompute {
 
-	int Util::RegistWorker(const String& id)
+	int Util::RegistWorker(const char* id)
 	{
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, CDComputeConfig::Instance()->requestEndPoint.data());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);		
 
 		char message[30];
@@ -81,18 +82,18 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::regist;
 		task.id = id;
 
-		DoSingleTask(&task, CDComputeConfig::Instance()->requestEndPoint.data());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 		
 	}
 
-	int Util::UnRegistWorker(const String& id)
+	int Util::UnRegistWorker(const char* id)
 	{
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, CDComputeConfig::Instance()->requestEndPoint.data());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -115,7 +116,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::unregist;
 		task.id = id;
 
-		DoSingleTask(&task, CDComputeConfig::Instance()->requestEndPoint.data());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
@@ -125,7 +126,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, CDComputeConfig::Instance()->requestEndPoint.data());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -148,12 +149,12 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::getWorkerNumber;
 		//task.id = id;
 
-		DoSingleTask(&task, CDComputeConfig::Instance()->requestEndPoint.data());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
 
-	static bool GetModulePath(HMODULE hModule, String& path)
+	static bool GetModulePath(HMODULE hModule, std::string& path)
 	{
 		char pBuf[MAX_PATH+1];
 		GetModuleFileNameA(hModule, pBuf,MAX_PATH);
@@ -176,7 +177,7 @@ namespace DCompute {
 		return true;
 	}
 
-	bool Util::CreateUniqueTempFile(String& strTempName)
+	std::shared_ptr<cex::IString> Util::CreateUniqueTempFile()
 	{
 		//HANDLE hMutex = CreateMutexA(NULL, FALSE, "CreateUniqueTempFile");
 		//if (NULL == hMutex)
@@ -209,25 +210,25 @@ namespace DCompute {
 		UINT nResult=GetTempFileNameA(szTempPath, "~dc", 0,szTempFile);       
 		assert (nResult);
 
-		strTempName=szTempFile;
+		std::shared_ptr<cex::IString> filename = cex::DeltaCreateRef<cex::IString>();
+		filename->assign(szTempFile);
 
 		//ReleaseMutex(hMutex); // 释放hMutex的持有权，注意这并不等同于删除Mutex对象
 		//CloseHandle(hMutex);
 
-		return true;
+		return filename;
 
 	}
 
-	bool Util::DeleteTempFile(const String& strTempName)
+	void Util::DeleteTempFile(const char* strTempName)
 	{
 		//remove(strTempName.data());
-		BOOL bRet = ::DeleteFileA(strTempName.data());
-		return bRet==TRUE;
+		::DeleteFileA(strTempName);
 	}
 
-	static bool GetConfigureJoberAddress(String& addr)
+	static bool GetConfigureJoberAddress(std::string& addr)
 	{
-		addr = CDComputeConfig::Instance()->joberAddress;
+		addr = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
 		/*String strModulePath;
 		GetModulePath(0, strModulePath);
@@ -258,52 +259,81 @@ namespace DCompute {
 		return static_cast<int>(si.dwNumberOfProcessors);
 	}
 
-	void Util::GetHostName( String& name )
+	std::shared_ptr<cex::IString> Util::GetHostName()
 	{
 		char temp[60];
 		gethostname(temp, sizeof(temp));
-		name = temp;
+		std::shared_ptr<cex::IString> str = cex::DeltaCreateRef<cex::IString>();
+		str->assign(temp);
+		return str;
 	}
 
 	/////////////////////////////////////////////////////////////////
 	// class CDComputeConfig
-	CDComputeConfig* CDComputeConfig::Instance()
+	class CDComputeConfig : public IDComputeConfig
 	{
-		static CDComputeConfig theInstance;
-		return &theInstance;
-	}
+	public:
 
-	CDComputeConfig::CDComputeConfig()
-	{
-		String strModulePath;
-		GetModulePath(0, strModulePath);
+		virtual const char* getJoberAddress() const
+		{
+			return joberAddress.data();
+		}
 
-		char strConfigFileName[MAX_PATH+1];
-		sprintf(strConfigFileName, "%s%s", strModulePath.data(), "Configure/DCompute.ini");
+		virtual const char* getClientEndPoint() const
+		{
+			return clientEndPoint.data();
+		}
 
-		char pBuf[MAX_PATH+1];
+		virtual const char* getWorkerEndPoint() const
+		{
+			return workerEndPoint.data();
+		}
 
-		GetPrivateProfileStringA( 
-			"DCompute",
-			"JoberAddress",
-			"127.0.0.1",
-			pBuf,
-			MAX_PATH,
-			strConfigFileName
-			);
+		virtual const char* getRequestEndPoint() const
+		{
+			return requestEndPoint.data();
+		}
 
-		joberAddress = pBuf;
+		std::string joberAddress;
 
-		char clientAdress[128];
-		sprintf(clientAdress, "tcp://%s:%d", joberAddress.data(), DCOMPUTE_JOB_CLIENT_PORT);
-		clientEndPoint = clientAdress;
+		std::string clientEndPoint;
+		std::string workerEndPoint;
 
-		char workerAdress[128];
-		sprintf(workerAdress, "tcp://%s:%d", joberAddress.data(), DCOMPUTE_JOB_WORKER_PORT);
-		workerEndPoint = workerAdress;
+		std::string requestEndPoint;
 
-		char requestAdress[30];
-		sprintf(requestAdress, "tcp://%s:%d", joberAddress.data(), DCOMPUTE_JOB_REPLY_PORT);
-		requestEndPoint = requestAdress;
-	}
+	public:
+
+		CDComputeConfig()
+		{
+			std::string strModulePath;
+			GetModulePath(0, strModulePath);
+
+			std::ostringstream oss;
+			oss << strModulePath.data() << "Configure/DCompute.ini";
+
+			char pBuf[MAX_PATH+1];
+
+			GetPrivateProfileStringA( 
+				"DCompute",
+				"JoberAddress",
+				"127.0.0.1",
+				pBuf,
+				MAX_PATH,
+				oss.str().c_str()
+				);
+
+			joberAddress = pBuf;
+
+			oss.clear();
+			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_CLIENT_PORT;
+			clientEndPoint = oss.str().c_str();
+
+			oss.clear();
+			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_REPLY_PORT;
+			requestEndPoint = oss.str().c_str();;
+		}
+	};
+	
+
+	REGIST_DELTA_INSTANCE(IDComputeConfig, CDComputeConfig);
 }

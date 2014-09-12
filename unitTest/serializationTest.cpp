@@ -166,7 +166,7 @@ GF_CLASS_VERSION(Foo, 8)
 //	ar&g.vtStop;
 //}
 
-void SerializationTest0()
+CEX_TEST(SerializationTest0)
 {
 	int saveNum = 1;
 
@@ -254,7 +254,7 @@ void SerializationTest0()
 
 }
 
-void SerializationTest()
+CEX_TEST(SerializationTest)
 {
 	int saveNum = 1;
 

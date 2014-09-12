@@ -1,37 +1,22 @@
 // test.cpp : Defines the entry point for the console application.
 //
-
 #include "stdafx.h"
-
-#define _LIB_PATH_ "F:\\SvnHome\\Common\\CommonLib"
-#include <DCompute/DCompute_Includes.h>
-
-extern void StringTest();
-extern void ThreadTest();
-extern void SerializationTest();
-extern void TypeFeflectionTest();
-extern void ZmqExTest();
-extern void LBTest();
-extern void LRUTest();
-extern void TaskTest();
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//StringTest();
+	CEX_RUN_ALL_TESTS();
 
-	//ThreadTest();
+	//CEX_RUN_TEST("SerializationTest");
 
-	//SerializationTest();
+	//CEX_RUN_TEST("ZmqExTest");
 
-	//TypeFeflectionTest();
+	//CEX_RUN_TEST("LBTest");
 
-	//ZmqExTest();
+	//CEX_RUN_TEST("LRUTest");
 
-	//LBTest();
+	//CEX_RUN_TEST("TaskTest");
 
-	//LRUTest();
-
-	TaskTest();
+	system("pause");
 
 	return 0;
 }

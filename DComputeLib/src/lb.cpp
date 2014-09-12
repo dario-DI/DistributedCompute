@@ -1,6 +1,7 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -25,19 +26,25 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		String address = CDComputeConfig::Instance()->joberAddress;
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
-		char routerAdress[30];
-		sprintf(routerAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_CLIENT_PORT);
-		char dealerAdress[30];
-		sprintf(dealerAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_WORKER_PORT);
+		std::ostringstream oss;
+
+		oss.clear();
+		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_CLIENT_PORT;
+		std::string routerAdress = oss.str().c_str();
+
+		oss.clear();
+		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
+		std::string dealerAdress = oss.str().c_str();;
+
 
 		_frontend = zmq_socket (_context, ZMQ_ROUTER);
-		int rc = zmq_bind (_frontend, routerAdress);
+		int rc = zmq_bind (_frontend, routerAdress.data());
 		assert(rc==0);
 
 		_backend = zmq_socket (_context, ZMQ_DEALER);
-		rc = zmq_bind (_backend, dealerAdress);
+		rc = zmq_bind (_backend, dealerAdress.data());
 		assert(rc==0);
 	}
 
@@ -55,7 +62,7 @@ namespace DCompute {
 		_context=0;
 	}
 
-	UINT CLBRouter::run()
+	unsigned int CLBRouter::run()
 	{
 		//int ret = zmq_device(ZMQ_QUEUE, _frontend, _backend);
 		//	return ret;

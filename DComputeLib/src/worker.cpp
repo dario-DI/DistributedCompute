@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
 #include <zmq.h>
@@ -10,19 +10,37 @@
 
 namespace DCompute {
 
+	class CWorker : public IWorker, public CThreadProxy
+	{
+	public:
+		CWorker();
+		~CWorker();
+
+	public:
+
+		bool create();
+
+		void destory();
+
+		int& getId() {return id;}
+
+	protected:
+
+		virtual unsigned int run();
+
+	private:
+		int id;
+		void* _context;
+		void* _worker;
+	};
+
 CWorker::CWorker() :_context(0),_worker(0)
 {
 }
 
 CWorker::~CWorker()
 {
-	setDone();
-	if (isRunning()) Sleep(1000);
-	stop();
-
-	String hostName;
-	Util::GetHostName(hostName);
-	Util::UnRegistWorker(hostName);
+	Util::UnRegistWorker(Util::GetHostName()->data());
 
 	destory();
 }
@@ -37,13 +55,11 @@ bool CWorker::create()
 	_worker = zmq_socket (_context, ZMQ_REP);
 #endif
 
-	int rc = zmq_connect(_worker, CDComputeConfig::Instance()->workerEndPoint.data());
+	int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 
-	String hostName;
-	Util::GetHostName(hostName);
-	Util::RegistWorker(hostName);
+	Util::RegistWorker(Util::GetHostName()->data());
 
 	Sleep(1000);
 
@@ -63,8 +79,7 @@ void CWorker::destory()
 	_context=0;
 }
 
-
-UINT CWorker::run()
+unsigned int CWorker::run()
 {
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
 	CLRURouter::SendReady(_worker);
@@ -73,30 +88,29 @@ UINT CWorker::run()
 	while(!_done)
 	{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		String client_addr;
-		CLRURouter::ReciveAddress(_worker, client_addr);
+		std::shared_ptr<cex::IString> client_addr = CLRURouter::ReciveAddress(_worker);
 #endif
 
 		// get task
-		String strTaskFile;
-		Util::CreateUniqueTempFile(strTaskFile);
+		std::shared_ptr<cex::IString> strTaskFile = Util::CreateUniqueTempFile();
 
-		bool nRet = ZmqEx::RecvFile(_worker, strTaskFile);
+		bool nRet = ZmqEx::Recv2File(_worker, strTaskFile->data());
 		assert(nRet==true);
 
-		IType* ptr = TypeReflectorManager::ReflectFile2Object( strTaskFile );
-		IType_DCTask* taskPtr = Query<IType_DCTask*>(ptr);
+		std::shared_ptr<cex::Interface> ptr = ReflectFile2Object( strTaskFile->data() );
+		IDCTask* taskPtr = cex::DeltaQueryInterface<IDCTask>(ptr.get());
 		assert(taskPtr!=NULL);
 
 		if (taskPtr==NULL)
 		{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-			CLRURouter::SendAddress(_worker, client_addr);
+			CLRURouter::SendAddress(_worker, client_addr->data());
 #endif
-			int nRet = ZmqEx::Send(_worker, "Type reflection error.");
+			char* errorMsg = "Type reflection error.";
+			int nRet = ZmqEx::Send(_worker, errorMsg, strlen(errorMsg));
 			assert(nRet>0);
 
-			Util::DeleteTempFile(strTaskFile);
+			Util::DeleteTempFile(strTaskFile->data());
 
 			Sleep(100);
 			continue;
@@ -107,17 +121,16 @@ UINT CWorker::run()
 
 		taskPtr->Do();
 
-		String strResultFile;
-		Util::CreateUniqueTempFile(strResultFile);
+		std::shared_ptr<cex::IString> strResultFile = Util::CreateUniqueTempFile();
 
-		taskPtr->Result2File(strResultFile);
+		taskPtr->result2File(strResultFile->data());
 
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		CLRURouter::SendAddress(_worker, client_addr);
+		CLRURouter::SendAddress(_worker, client_addr->data());
 #endif
 
 		// send result
-		nRet = ZmqEx::SendFile(_worker, strResultFile);
+		nRet = ZmqEx::SendFile(_worker, strResultFile->data());
 		assert(nRet==true);
 
 
@@ -127,15 +140,15 @@ UINT CWorker::run()
 
 		Sleep(100);
 
-		Util::DeleteTempFile(strTaskFile);
-		Util::DeleteTempFile(strResultFile);
+		Util::DeleteTempFile(strTaskFile->data());
+		Util::DeleteTempFile(strResultFile->data());
 	}
 
 	return 0;
 }
 
 
-//UINT CWorker::run()
+//unsigned int CWorker::run()
 //{
 //	while(!_done)
 //	{
@@ -187,7 +200,7 @@ UINT CWorker::run()
 //	return 0;
 //}
 
-//UINT CWorker::run()
+//unsigned int CWorker::run()
 //{
 //	while(!_done)
 //	{

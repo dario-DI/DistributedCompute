@@ -1,6 +1,7 @@
-#include "stdafx.h"
+
 #include <assert.h>
 
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <queue>
@@ -9,6 +10,7 @@
 #include <DCompute/lru.h>
 #include <DCompute/zmqEx.h>
 #include <DCompute/util.h>
+#include <cex/deltareflection.h>
 
 namespace DCompute {
 
@@ -25,19 +27,19 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		String address = CDComputeConfig::Instance()->joberAddress;
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
-		char frontendAdress[30];
-		sprintf(frontendAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_CLIENT_PORT);
-		char backendAdress[30];
-		sprintf(backendAdress, "tcp://%s:%d", address.data(), DCOMPUTE_JOB_WORKER_PORT);
+		std::ostringstream oss;
 
+		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_CLIENT_PORT;
 		_frontend = zmq_socket (_context, ZMQ_ROUTER);
-		int rc = zmq_bind (_frontend, frontendAdress);
+		int rc = zmq_bind (_frontend, oss.str().c_str());
 		assert(rc==0);
 
+		oss.clear();
+		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
 		_backend = zmq_socket (_context, ZMQ_ROUTER);
-		rc = zmq_bind (_backend, backendAdress);
+		rc = zmq_bind (_backend, oss.str().c_str());
 		assert(rc==0);
 	}
 
@@ -92,23 +94,26 @@ namespace DCompute {
 		}
 	}
 
-	int CLRURouter::ReciveAddress(void* socket, String& addr)
+	std::shared_ptr<cex::IString> CLRURouter::ReciveAddress(void* socket)
 	{
+		auto addr = cex::DeltaCreateRef<cex::IString>();
+
 		char worker_addr[30];
 		int size = zmq_recv (socket, worker_addr, 100, 0);
 		assert(size>0 && size<30);
-		addr.assign(worker_addr, size);
+		addr->assign(worker_addr, size);
 
 		char empty[2];
 		int empty_size = zmq_recv(socket, empty, 2, 0);
 		assert (empty_size == 0);
 
-		return size;
+		return addr;
 	}
 
-	int CLRURouter::SendAddress(void* socket, const String& addr)
+	int CLRURouter::SendAddress(void* socket, const char* addr)
 	{
-		int rc = zmq_send(socket,addr.data(), addr.length(), ZMQ_SNDMORE);
+		int len = strlen(addr);
+		int rc = zmq_send(socket,addr, len, ZMQ_SNDMORE);
 		assert(rc>=0);
 		rc = zmq_send (socket, "", 0, ZMQ_SNDMORE);
 		assert(rc>=0);
@@ -126,7 +131,7 @@ namespace DCompute {
 		return 0;
 	}
 
-	UINT CLRURouter::run()
+	unsigned int CLRURouter::run()
 	{
 		zmq_msg_t msg;
 		int rc = zmq_msg_init(&msg);
@@ -138,7 +143,7 @@ namespace DCompute {
 			{ _frontend,  0, ZMQ_POLLIN, 0 }
 		};
 
-		std::queue<String> worker_queue;
+		std::queue<std::string> worker_queue;
 
 		while (!_done) 
 		{
@@ -152,16 +157,14 @@ namespace DCompute {
 
 			if (items [0].revents & ZMQ_POLLIN) 
 			{
-				String worker_addr;
-				int worker_addr_size = ReciveAddress(_backend, worker_addr);
-				worker_queue.push(worker_addr); 
+				std::shared_ptr<cex::IString> worker_addr = ReciveAddress(_backend);
+				worker_queue.push(worker_addr->data()); 
 
-				String client_addr;
-				int client_addr_size = ReciveAddress(_backend, client_addr);
+				std::shared_ptr<cex::IString> client_addr = ReciveAddress(_backend);
 
-				if ( !(client_addr=="READY") ) 
+				if ( client_addr->compare("READY") != 0 ) 
 				{
-					SendAddress(_frontend,  client_addr);
+					SendAddress(_frontend,  client_addr->data());
 
 					rc = detail::ForwardMessage(_backend, _frontend, msg);
 					if (rc==-1) return rc;
@@ -176,7 +179,7 @@ namespace DCompute {
 					continue;
 				}
 
-				SendAddress(_backend,  worker_queue.front());
+				SendAddress(_backend,  worker_queue.front().data());
 
 				rc = detail::ForwardMessage(_frontend, _backend, msg);
 				if (rc==-1) return rc;
