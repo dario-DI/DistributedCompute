@@ -102,7 +102,7 @@ CEX_TEST(TaskTest)
 
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
-			worker[i]->stop();
+			worker[i]->join();
 		}
 	}
 
@@ -110,5 +110,5 @@ CEX_TEST(TaskTest)
 
 	//Sleep(1000000000);
 
-	server->stop();
+	server->join();
 }

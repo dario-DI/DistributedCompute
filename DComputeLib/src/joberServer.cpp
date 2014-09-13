@@ -57,6 +57,16 @@ namespace DCompute {
 
 		void destory();
 
+		virtual void join()
+		{
+			_done = true;
+
+			zmq_close(_reply);
+			zmq_term(_context);
+
+			__super::join();
+		}
+
 	protected:
 
 		virtual unsigned int run();
@@ -213,11 +223,11 @@ namespace DCompute {
 
 	public:
 
-		void create();
+		virtual void create();
 
-		bool start();
+		virtual void start();
 
-		bool stop();
+		virtual void join();
 
 	private:
 		CReplyServer _reply;
@@ -236,8 +246,7 @@ namespace DCompute {
 
 	CJoberServer::~CJoberServer()
 	{
-		_reply.stop();
-		_router->stop();
+		join();
 	}
 
 	void CJoberServer::create()
@@ -246,20 +255,16 @@ namespace DCompute {
 		_reply.create();
 	}
 
-	bool CJoberServer::start()
+	void CJoberServer::start()
 	{
 		_router->start();
 		_reply.start();
-
-		return true;
 	}
 
-	bool CJoberServer::stop()
+	void CJoberServer::join()
 	{
-		_reply.stop();
-		_router->stop();
-
-		return true;
+		_router->join();
+		_reply.join();
 	}
 
 	REGIST_DELTA_CREATOR(IJoberServer, CJoberServer);

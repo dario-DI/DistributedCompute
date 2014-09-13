@@ -27,7 +27,9 @@ namespace DCompute
 
 		virtual void start()=0;
 		
-		virtual void stop()=0;
+		virtual void join()=0;
+
+		
 
 
 		virtual int getID()=0;

@@ -38,6 +38,16 @@ public:
 		zmq_term(_context);
 	}
 
+	virtual void join()
+	{
+		_done = true;
+
+		zmq_close(_client);
+		zmq_term(_context);
+
+		__super::join();
+	}
+
 	void* _context;
 	void* _client;
 	int id;
@@ -103,6 +113,16 @@ public:
 		zmq_term(_context);
 	}
 
+	virtual void join()
+	{
+		_done = true;
+
+		zmq_close(_worker);
+		zmq_term(_context);
+
+		__super::join();
+	}
+
 	void* _context;
 	void* _worker;
 	int id;
@@ -120,7 +140,12 @@ protected:
 		{
 			++counter;
 
-			std::string data = ZmqEx::Recv(_worker)->data();
+			auto pData = ZmqEx::Recv(_worker);
+			if (pData == nullptr)
+			{
+				continue;
+			}
+			std::string data = pData->data();
 
 			char msgSend[60];
 			sprintf(msgSend, "worker:%d->%s\n", id, data.data());
@@ -187,15 +212,15 @@ CEX_TEST(LBTest)
 		//	client[i].start();
 		//}
 
-		Sleep(3000);
+		Sleep(5000);
 
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
-			worker[i].stop();
+			worker[i].join();
 		}
 	}
 
-	
+	server->join();
 }
 
 CEX_TEST_OFF(LBTest1)

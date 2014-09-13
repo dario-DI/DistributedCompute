@@ -22,6 +22,17 @@ namespace DCompute {
 
 		void destory();
 
+		virtual void join()
+		{
+			_done = true;
+
+			zmq_close(_worker);
+			zmq_term(_context);
+
+			__super::join();
+		}
+
+
 		int getID() {return id;}
 
 		void setID(int id){this->id = id;}

@@ -25,7 +25,9 @@ namespace DCompute
 
 		virtual void start()=0;
 
-		virtual void stop()=0;
+		virtual void join()=0;
+
+		
 	};
 
 	class DCOMPUTE_API LRURouterMethod

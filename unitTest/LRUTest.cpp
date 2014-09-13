@@ -38,6 +38,16 @@ public:
 		zmq_term(_context);
 	}
 
+	virtual void join()
+	{
+		_done = true;
+
+		zmq_close(_client);
+		zmq_term(_context);
+
+		__super::join();
+	}
+
 	void* _context;
 	void* _client;
 	int id;
@@ -87,6 +97,16 @@ public:
 	{
 		zmq_close(_worker);
 		zmq_term(_context);
+	}
+
+	virtual void join()
+	{
+		_done = true;
+
+		zmq_close(_worker);
+		zmq_term(_context);
+
+		__super::join();
 	}
 
 	void* _context;
@@ -164,15 +184,15 @@ CEX_TEST(LRUTest)
 
 	for (int i=0; i<WORKERSIZE; ++i)
 	{
-		worker[i].stop();
+		worker[i].join();
 	}
 
 	for (int i=0; i<CLIENTSIZE; ++i)
 	{
-		client[i].stop();
+		client[i].join();
 	}
 
-	router->stop();
+	router->join();
 }
 
 //  出队操作，使用一个可存储任何类型的数组实现

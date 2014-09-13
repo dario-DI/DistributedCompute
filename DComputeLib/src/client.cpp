@@ -140,6 +140,16 @@ public:
 
 	void destory();
 
+	virtual void join()
+	{
+		_done = true;
+		
+		zmq_close(_client);
+		zmq_term(_context);
+
+		__super::join();
+	}
+
 
 	void setTaskFile(const char* filename) { _strTaskFile = filename; }
 
@@ -166,7 +176,7 @@ _client(0)
 
 CClientThread::~CClientThread()
 {
-	stop();
+	join();
 
 	destory();
 

@@ -226,32 +226,6 @@ namespace DCompute {
 		::DeleteFileA(strTempName);
 	}
 
-	static bool GetConfigureJoberAddress(std::string& addr)
-	{
-		addr = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
-
-		/*String strModulePath;
-		GetModulePath(0, strModulePath);
-
-		char strConfigFileName[MAX_PATH+1];
-		sprintf(strConfigFileName, "%s%s", strModulePath.data(), "Configure/DCompute.ini");
-
-		char pBuf[MAX_PATH+1];
-
-		GetPrivateProfileStringA( 
-			"DCompute",
-			"JoberAddress",
-			"127.0.0.1",
-			pBuf,
-			MAX_PATH,
-			strConfigFileName
-			);
-
-		addr = pBuf;*/
-
-		return true;
-	}
-
 	int Util::DetectNumberOfProcessor() 
 	{
 		SYSTEM_INFO si;
@@ -329,6 +303,11 @@ namespace DCompute {
 			oss.str("");
 			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_CLIENT_PORT;
 			clientEndPoint = oss.str();
+
+			oss.clear();
+			oss.str("");
+			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_WORKER_PORT;
+			workerEndPoint = oss.str();
 
 			oss.clear();
 			oss.str("");

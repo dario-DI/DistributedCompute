@@ -43,6 +43,7 @@ namespace DCompute
 	class IDComputeConfig : public cex::Interface
 	{
 	public:
+		// get the host address
 		virtual const char* getJoberAddress()=0;
 
 		virtual const char* getClientEndPoint()=0;
@@ -61,12 +62,7 @@ namespace DCompute
 
 			virtual ~TThreadProxy()=0
 			{
-				if (thread != nullptr)
-				{
-					thread->join();
-				}
-
-				thread = nullptr;
+				join();
 			}
 
 		public:
@@ -75,18 +71,40 @@ namespace DCompute
 				if (thread == nullptr)
 				{
 					thread = std::make_shared<std::thread>(&TThreadProxy<Base>::run, this);
-					thread->join();
 				}
 			}
 
-			virtual void stop()
+			virtual void join()
 			{
 				_done = true;
+				
 				if (thread != nullptr)
 				{
-					thread->join();
+					if (thread->joinable())
+					{
+						thread->join();
+					}
+
+					thread = nullptr;
 				}
 			}
+
+			//virtual int stop(int milliseconds=TIME_WAITFOR_THREADSTOP)
+			//{
+			//	if (thread == nullptr) return 0;
+
+			//	/* return exit code when thread terminates */
+			//	HANDLE thrHandle = thread->native_handle();
+			//	thread->detach();
+			//	thread = nullptr;
+
+			//	unsigned long res;
+			//	if (WaitForSingleObject(thrHandle, milliseconds) == WAIT_FAILED
+			//		|| GetExitCodeThread(thrHandle, &res) == 0)
+			//		return _Thrd_error;
+
+			//	return (CloseHandle(thrHandle) == 0 ? _Thrd_error : 0);
+			//}
 
 		protected:
 
@@ -96,6 +114,7 @@ namespace DCompute
 			std::shared_ptr<std::thread> thread;
 
 			volatile bool _done;
+
 		};
 	}
 }

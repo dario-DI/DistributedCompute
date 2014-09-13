@@ -26,6 +26,8 @@
 #define DC_REP_OK		"OK"
 #define DC_REP_NO		"NO"
 
+#define TIME_WAITFOR_THREADSTOP 3000
+
 /// 消息一次发送最大字节
 #define ZMQ_SEND_ONCE_MAX	128 /*2048*/ 
 

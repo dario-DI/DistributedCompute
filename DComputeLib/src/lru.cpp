@@ -23,8 +23,6 @@ namespace DCompute {
 
 		virtual void create();
 
-		virtual void destory();
-
 	protected:
 
 		virtual unsigned int run();
@@ -45,7 +43,6 @@ namespace DCompute {
 
 	CLRURouter::~CLRURouter()
 	{
-		destory();
 	}
 
 	void CLRURouter::create()
@@ -67,20 +64,6 @@ namespace DCompute {
 		_backend = zmq_socket (_context, ZMQ_ROUTER);
 		rc = zmq_bind (_backend, oss.str().c_str());
 		assert(rc==0);
-	}
-
-	void CLRURouter::destory()
-	{
-		if ( _context!=0 )
-		{
-			zmq_close(_backend);
-			zmq_close(_frontend);
-			zmq_term(_context);
-		}
-
-		_backend=0;
-		_frontend=0;
-		_context=0;
 	}
 
 	namespace detail

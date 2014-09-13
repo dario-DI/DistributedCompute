@@ -29,7 +29,9 @@ namespace DCompute
 
 		virtual void start()=0;
 
-		virtual void stop()=0;
+		virtual void join()=0;
+
+		
 	};
 
 	class IJoberServer : public cex::Interface
@@ -38,9 +40,11 @@ namespace DCompute
 		virtual void create()=0;
 
 
-		virtual bool start()=0;
+		virtual void start()=0;
 
-		virtual bool stop()=0;
+		virtual void join()=0;
+
+		
 	};
 
 	namespace Contract
@@ -56,7 +60,32 @@ namespace DCompute
 		public:
 			TRouterThread() : _context(0), _frontend(0), _backend(0) {}
 
-			virtual ~TRouterThread()=0 {}
+			virtual ~TRouterThread()=0 { destory();}
+
+			virtual void join()
+			{
+				_done = true;
+
+				zmq_close(_frontend);
+				zmq_close(_backend);
+				zmq_term(_context);
+
+				__super::join();
+			}
+
+			virtual void destory()
+			{
+				if ( _context!=0 )
+				{
+					zmq_close(_backend);
+					zmq_close(_frontend);
+					zmq_term(_context);
+				}
+
+				_backend=0;
+				_frontend=0;
+				_context=0;
+			}
 
 		protected:
 			void* _context;
