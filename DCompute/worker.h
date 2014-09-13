@@ -24,6 +24,12 @@ namespace DCompute
 
 		virtual void destory()=0;
 
+
+		virtual void start()=0;
+		
+		virtual void stop()=0;
+
+
 		virtual int getID()=0;
 
 		virtual void setID(int id)=0;

@@ -25,12 +25,18 @@ namespace DCompute
 		virtual void create()=0;
 
 		virtual void destory()=0;
+
+
+		virtual void start()=0;
+
+		virtual void stop()=0;
 	};
 
 	class IJoberServer : public cex::Interface
 	{
 	public:
 		virtual void create()=0;
+
 
 		virtual bool start()=0;
 
@@ -42,41 +48,37 @@ namespace DCompute
 		class WorkerInfo;
 	}
 
-	class CRouterBase : public CThreadProxy
+	namespace detail
 	{
-	public:
-		CRouterBase() : _context(0), _frontend(0), _backend(0) {}
+		template<typename Base>
+		class TRouterThread : public TThreadProxy<Base>
+		{
+		public:
+			TRouterThread() : _context(0), _frontend(0), _backend(0) {}
 
-		virtual ~CRouterBase() {}
+			virtual ~TRouterThread()=0 {}
 
-		virtual void create()=0;
+		protected:
+			void* _context;
+			void* _frontend;
+			void* _backend;
+		};
 
-		virtual void destory()=0;
+		class CWokerCounter
+		{
+		public:
+			~CWokerCounter(){}
 
-	protected:
-		virtual unsigned int run()=0;
+			std::vector<std::string> workers;
 
-	protected:
-		void* _context;
-		void* _frontend;
-		void* _backend;
+		private:
+			CWokerCounter() {}
 
-	};
+			static CWokerCounter* Instance();
 
-	class CWokerCounter
-	{
-	public:
-		~CWokerCounter(){}
-
-		std::vector<std::string> workers;
-
-	private:
-		CWokerCounter() {}
-
-		static CWokerCounter* Instance();
-
-		friend class Contract::WorkerInfo;
-	};
+			friend class Contract::WorkerInfo;
+		};
+	}
 
 }
 

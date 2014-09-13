@@ -59,7 +59,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);		
 
 		char message[30];
@@ -82,7 +82,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::regist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 		
@@ -93,7 +93,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -116,7 +116,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::unregist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
@@ -126,7 +126,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -149,7 +149,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::getWorkerNumber;
 		//task.id = id;
 
-		DoSingleTask(&task, cex::DeltaCreateRef<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
 
 		return task.result;
 	}
@@ -228,7 +228,7 @@ namespace DCompute {
 
 	static bool GetConfigureJoberAddress(std::string& addr)
 	{
-		addr = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
+		addr = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
 		/*String strModulePath;
 		GetModulePath(0, strModulePath);
@@ -269,21 +269,43 @@ namespace DCompute {
 	}
 
 	/////////////////////////////////////////////////////////////////
-	// class CDComputeConfig
-	class CDComputeConfig
+	// class CDComputeConfig	
+	class CDComputeConfigProxy : public IDComputeConfig
 	{
 	public:
-		std::string joberAddress;
-
-		std::string clientEndPoint;
-		std::string workerEndPoint;
-
-		std::string requestEndPoint;
-
-	private:
-
-		CDComputeConfig()
+		virtual const char* getJoberAddress()
 		{
+			InitializationIfNot();
+			return joberAddress.data();
+		}
+
+		virtual const char* getClientEndPoint()
+		{
+			InitializationIfNot();
+			return clientEndPoint.data();
+		}
+
+		virtual const char* getWorkerEndPoint()
+		{
+			InitializationIfNot();
+			return workerEndPoint.data();
+		}
+
+		virtual const char* getRequestEndPoint()
+		{
+			InitializationIfNot();
+			return requestEndPoint.data();
+		}
+
+	protected:
+		void InitializationIfNot()
+		{
+			if (joberAddress.length()!=0 || clientEndPoint.length()!=0 ||
+				workerEndPoint.length()!=0 || requestEndPoint.length()!=0)
+			{
+				return;
+			}
+
 			std::string strModulePath;
 			GetModulePath(0, strModulePath);
 
@@ -304,46 +326,26 @@ namespace DCompute {
 			joberAddress = pBuf;
 
 			oss.clear();
+			oss.str("");
 			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_CLIENT_PORT;
-			clientEndPoint = oss.str().c_str();
+			clientEndPoint = oss.str();
 
 			oss.clear();
+			oss.str("");
 			oss << "tcp://" << joberAddress.data() << ":" << DCOMPUTE_JOB_REPLY_PORT;
-			requestEndPoint = oss.str().c_str();;
+			requestEndPoint = oss.str();
 		}
 
-	public:
-		static CDComputeConfig& Instance()
-		{
-			static CDComputeConfig s_CDComputeConfig;
-			return s_CDComputeConfig;
-		}
-	};
-	
-	class CDComputeConfigProxy : public IDComputeConfig
-	{
-	public:
+	protected:
+		bool bInitialization;
 
-		virtual const char* getJoberAddress() const
-		{
-			return CDComputeConfig::Instance().joberAddress.data();
-		}
+		std::string joberAddress;
 
-		virtual const char* getClientEndPoint() const
-		{
-			return CDComputeConfig::Instance().clientEndPoint.data();
-		}
+		std::string clientEndPoint;
+		std::string workerEndPoint;
 
-		virtual const char* getWorkerEndPoint() const
-		{
-			return CDComputeConfig::Instance().workerEndPoint.data();
-		}
-
-		virtual const char* getRequestEndPoint() const
-		{
-			return CDComputeConfig::Instance().requestEndPoint.data();
-		}
+		std::string requestEndPoint;
 	};
 
-	REGIST_DELTA_CREATOR(IDComputeConfig, CDComputeConfigProxy);
+	REGIST_DELTA_INSTANCE(IDComputeConfig, CDComputeConfigProxy);
 }

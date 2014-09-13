@@ -33,15 +33,18 @@ namespace DCompute {
 	friend class CReplyServer;
 	};*/
 
-	CWokerCounter* CWokerCounter::Instance()
+	namespace detail
 	{
-		static CWokerCounter theInstance;
-		return &theInstance;
+		CWokerCounter* CWokerCounter::Instance()
+		{
+			static CWokerCounter theInstance;
+			return &theInstance;
+		}
 	}
 
 	///////////////////////////////////////////////
 	// class CReplyServer
-	class CReplyServer : public IReplyServer, public CThreadProxy
+	class CReplyServer : public detail::TThreadProxy<IReplyServer>
 	{
 	public:
 		CReplyServer();
@@ -78,7 +81,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 		std::ostringstream ossm;
 		ossm << "tcp://" << address << ":" << DCOMPUTE_JOB_REPLY_PORT;
 		std::string replyAddr = ossm.str();
@@ -234,7 +237,7 @@ namespace DCompute {
 	CJoberServer::~CJoberServer()
 	{
 		_reply.stop();
-		cex::DeltaQueryInterface<CThreadProxy>(_router)->stop();
+		_router->stop();
 	}
 
 	void CJoberServer::create()
@@ -245,7 +248,7 @@ namespace DCompute {
 
 	bool CJoberServer::start()
 	{
-		cex::DeltaQueryInterface<CThreadProxy>(_router)->start();
+		_router->start();
 		_reply.start();
 
 		return true;
@@ -254,7 +257,7 @@ namespace DCompute {
 	bool CJoberServer::stop()
 	{
 		_reply.stop();
-		cex::DeltaQueryInterface<CThreadProxy>(_router)->stop();
+		_router->stop();
 
 		return true;
 	}

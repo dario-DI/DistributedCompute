@@ -13,7 +13,7 @@
 
 namespace DCompute {
 
-	class CLBRouter : public ILBRouter, public CRouterBase
+	class CLBRouter : public detail::TRouterThread<ILBRouter>
 	{
 	public:
 		CLBRouter();
@@ -24,6 +24,7 @@ namespace DCompute {
 
 		virtual void destory();
 
+	protected:
 		virtual unsigned int run();
 	};
 
@@ -40,17 +41,18 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
 		std::ostringstream oss;
 
 		oss.clear();
 		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_CLIENT_PORT;
-		std::string routerAdress = oss.str().c_str();
+		std::string routerAdress = oss.str();
 
 		oss.clear();
+		oss.str("");
 		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
-		std::string dealerAdress = oss.str().c_str();;
+		std::string dealerAdress = oss.str();;
 
 
 		_frontend = zmq_socket (_context, ZMQ_ROUTER);

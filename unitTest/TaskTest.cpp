@@ -80,7 +80,7 @@ CEX_TEST(TaskTest)
 		{
 			worker[i]->setID(i);
 			worker[i]->create();
-			cex::DeltaQueryInterface<CThreadProxy>(worker[i])->start();
+			worker[i]->start();
 		}
 
 		size_t workerSize = Util::GetWorkerSize();
@@ -102,7 +102,7 @@ CEX_TEST(TaskTest)
 
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
-			cex::DeltaQueryInterface<CThreadProxy>(worker[i])->stop();
+			worker[i]->stop();
 		}
 	}
 

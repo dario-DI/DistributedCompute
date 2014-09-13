@@ -14,7 +14,7 @@
 
 namespace DCompute {
 
-	class CLRURouter : public ILRURouter, public CRouterBase
+	class CLRURouter : public detail::TRouterThread<ILRURouter>
 	{
 	public:
 		CLRURouter();
@@ -24,6 +24,8 @@ namespace DCompute {
 		virtual void create();
 
 		virtual void destory();
+
+	protected:
 
 		virtual unsigned int run();
 
@@ -50,7 +52,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
 		std::ostringstream oss;
 
@@ -60,6 +62,7 @@ namespace DCompute {
 		assert(rc==0);
 
 		oss.clear();
+		oss.str("");
 		oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
 		_backend = zmq_socket (_context, ZMQ_ROUTER);
 		rc = zmq_bind (_backend, oss.str().c_str());

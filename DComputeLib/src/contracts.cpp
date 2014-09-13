@@ -19,7 +19,7 @@ namespace DCompute { namespace Contract {
 		{
 		case regist:
 			{
-				std::vector<std::string>& workers=CWokerCounter::Instance()->workers;
+				std::vector<std::string>& workers=detail::CWokerCounter::Instance()->workers;
 				workers.push_back(id);
 				result = workers.size();
 				printf("regist worker: %s.\n", id.data());
@@ -27,7 +27,7 @@ namespace DCompute { namespace Contract {
 			break;
 		case unregist:
 			{
-				std::vector<std::string>& workers=CWokerCounter::Instance()->workers;
+				std::vector<std::string>& workers=detail::CWokerCounter::Instance()->workers;
 				std::vector<std::string>::iterator itr = std::find(workers.begin(), workers.end(), id);
 				if (itr != workers.end() )
 				{
@@ -39,7 +39,7 @@ namespace DCompute { namespace Contract {
 			break;
 		case getWorkerNumber:
 			{
-				result = (int)CWokerCounter::Instance()->workers.size();
+				result = (int)detail::CWokerCounter::Instance()->workers.size();
 			}
 			break;
 		default:

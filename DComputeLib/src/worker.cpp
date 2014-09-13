@@ -10,7 +10,7 @@
 
 namespace DCompute {
 
-	class CWorker : public IWorker, public CThreadProxy
+	class CWorker : public detail::TThreadProxy<IWorker>
 	{
 	public:
 		CWorker();
@@ -57,7 +57,7 @@ bool CWorker::create()
 	_worker = zmq_socket (_context, ZMQ_REP);
 #endif
 
-	int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
+	int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 

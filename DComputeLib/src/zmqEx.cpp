@@ -103,7 +103,11 @@ namespace DCompute {
 	{
 		FILE* file;
 		fopen_s(&file, filename, "rb");
-		if ( file == NULL ) return false;
+		if ( file == NULL )
+		{
+			assert(false);
+			return false;
+		}
 
 		size_t length = _filelength( _fileno(file) );
 

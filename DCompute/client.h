@@ -52,6 +52,11 @@ namespace DCompute
 		virtual void destory()=0;
 
 
+		virtual void start()=0;
+
+		virtual void stop()=0;
+
+
 		virtual void setTaskFile(const char* filename)=0;
 
 		virtual const char* getResultFile() const=0;

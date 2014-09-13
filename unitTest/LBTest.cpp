@@ -14,7 +14,7 @@
 
 using namespace DCompute;
 
-class Client : public CThreadProxy
+class Client : public detail::TThreadProxy<cex::Interface>
 {
 public:
 	Client()
@@ -27,7 +27,7 @@ public:
 		sprintf(clientAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_CLIENT_PORT);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint());
+		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
 		//int rc = zmq_connect(_client, clientAdress);
 		assert(rc==0);
 	}
@@ -76,7 +76,7 @@ protected:
 	}
 };
 
-class Worker : public CThreadProxy
+class Worker : public detail::TThreadProxy<cex::Interface>
 {
 public:
 	Worker()
@@ -89,7 +89,7 @@ public:
 		sprintf(workerAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_WORKER_PORT);
 
 		_worker = zmq_socket (_context, ZMQ_REP);
-		int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
+		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
 		//int rc = zmq_connect(_worker, workerAdress);
 		assert(rc==0);
 		//int jj = zmq_errno();
@@ -140,7 +140,7 @@ CEX_TEST(LBTest)
 {
 	auto server = cex::DeltaCreateRef<ILBRouter>();
 	server->create();
-	cex::DeltaQueryInterface<CThreadProxy>(server)->start();
+	server->start();
 
 	if(0)
 	{
@@ -159,7 +159,7 @@ CEX_TEST(LBTest)
 			client[i].start();
 		}
 
-		Sleep(1000000);
+		Sleep(1000);
 	}
 
 	if(1)
@@ -198,7 +198,7 @@ CEX_TEST(LBTest)
 	
 }
 
-CEX_TEST(LBTest1)
+CEX_TEST_OFF(LBTest1)
 {
 	void* _context = zmq_init(1);
 
@@ -306,7 +306,7 @@ CEX_TEST(LBTest1)
 	Sleep(1000000);
 }
 
-void LBTest0()
+CEX_TEST_OFF(LBTest0)
 {
 	fprintf (stderr, "test_reqrep_device running...\n");
 

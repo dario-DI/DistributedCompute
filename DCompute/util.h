@@ -43,52 +43,61 @@ namespace DCompute
 	class IDComputeConfig : public cex::Interface
 	{
 	public:
-		virtual const char* getJoberAddress() const=0;
+		virtual const char* getJoberAddress()=0;
 
-		virtual const char* getClientEndPoint() const=0;
-		virtual const char* getWorkerEndPoint() const=0;
+		virtual const char* getClientEndPoint()=0;
+		virtual const char* getWorkerEndPoint()=0;
 
-		virtual const char* getRequestEndPoint() const=0;
+		virtual const char* getRequestEndPoint()=0;
 	};
 
-	class CThreadProxy
+	namespace detail
 	{
-	public:
-		CThreadProxy() : _done(false) {}
-
-		virtual ~CThreadProxy()=0
+		template<typename Base>
+		class TThreadProxy : public Base
 		{
-			if (thread != nullptr)
+		public:
+			TThreadProxy() : _done(false), thread(nullptr) {}
+
+			virtual ~TThreadProxy()=0
 			{
-				thread->join();
+				if (thread != nullptr)
+				{
+					thread->join();
+				}
+
+				thread = nullptr;
 			}
-		}
 
-	public:
-		void start()
-		{
-			thread = std::make_shared<std::thread>(&CThreadProxy::run, this);
-			thread->join();
-		}
-
-		void stop()
-		{
-			_done = true;
-			if (thread != nullptr)
+		public:
+			virtual void start()
 			{
-				thread->join();
+				if (thread == nullptr)
+				{
+					thread = std::make_shared<std::thread>(&TThreadProxy<Base>::run, this);
+					thread->join();
+				}
 			}
-		}
 
-	protected:
+			virtual void stop()
+			{
+				_done = true;
+				if (thread != nullptr)
+				{
+					thread->join();
+				}
+			}
 
-		virtual unsigned int run()=0;
+		protected:
 
-	protected:
-		std::shared_ptr<std::thread> thread;
+			virtual unsigned int run()=0;
 
-		volatile bool _done;
-	};
+		protected:
+			std::shared_ptr<std::thread> thread;
+
+			volatile bool _done;
+		};
+	}
 }
 
 #endif

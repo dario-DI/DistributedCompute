@@ -17,7 +17,7 @@ using namespace DCompute;
 
 namespace Device{
 
-class Client : public CThreadProxy
+class Client : public detail::TThreadProxy<cex::Interface>
 {
 public:
 	Client()
@@ -27,7 +27,7 @@ public:
 		_context = zmq_init(1);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, cex::DeltaCreateRef<IDComputeConfig>()->getClientEndPoint());
+		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
 		//int rc = zmq_connect(_client, "tcp://127.0.0.1:5559");
 		assert(rc==0);
 	}
@@ -66,7 +66,7 @@ protected:
 	}
 };
 
-class Worker : public CThreadProxy
+class Worker : public detail::TThreadProxy<cex::Interface>
 {
 public:
 	Worker()
@@ -76,7 +76,7 @@ public:
 		_context = zmq_init(1);
 
 		_worker = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_worker, cex::DeltaCreateRef<IDComputeConfig>()->getWorkerEndPoint());
+		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
 		//int rc = zmq_connect (_worker, "tcp://127.0.0.1:5560");
 		assert(rc==0);
 
@@ -144,7 +144,7 @@ CEX_TEST(LRUTest)
 {
 	auto router = cex::DeltaCreateRef<ILRURouter>();
 	router->create();
-	cex::DeltaQueryInterface<CThreadProxy>(router)->start();
+	router->start();
 
 	Device::Worker worker[WORKERSIZE];
 	Device::Client client[CLIENTSIZE];
@@ -172,26 +172,26 @@ CEX_TEST(LRUTest)
 		client[i].stop();
 	}
 
-	cex::DeltaQueryInterface<CThreadProxy>(router)->stop();
+	router->stop();
 }
-
 
 //  出队操作，使用一个可存储任何类型的数组实现
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
-CEX_TEST(LRUTest0)
+CEX_TEST_OFF(LRUTest0)
 {
-	std::string address = cex::DeltaCreateRef<IDComputeConfig>()->getJoberAddress();
+	std::string address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
 	std::ostringstream oss;
 
 	oss.clear();
 	oss << "tcp://" << address << ":" << DCOMPUTE_JOB_CLIENT_PORT;
-	std::string frontendAdress = oss.str().c_str();
+	std::string frontendAdress = oss.str();
 
 	oss.clear();
+	oss.str("");
 	oss << "tcp://" << address << ":" << DCOMPUTE_JOB_WORKER_PORT;
-	std::string backendAdress = oss.str().c_str();;
+	std::string backendAdress = oss.str();
 
 	//  准备0MQ上下文和套接字
 	void *context = zmq_init (1);
