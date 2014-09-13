@@ -66,9 +66,7 @@ namespace DCompute
 			{
 				_done = true;
 
-				zmq_close(_frontend);
-				zmq_close(_backend);
-				zmq_term(_context);
+				destory();
 
 				__super::join();
 			}

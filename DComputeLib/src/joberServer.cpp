@@ -61,8 +61,7 @@ namespace DCompute {
 		{
 			_done = true;
 
-			zmq_close(_reply);
-			zmq_term(_context);
+			destory();
 
 			__super::join();
 		}
@@ -120,7 +119,12 @@ namespace DCompute {
 			auto strTaskFile = Util::CreateUniqueTempFile();
 
 			bool nRet = ZmqEx::Recv2File(_reply, strTaskFile->data());
-			assert(nRet==true);
+			if (nRet == false)
+			{
+				if (_done) return 0;
+				assert(false);
+				return -1;
+			}
 
 			auto ptr = ReflectFile2Object( strTaskFile->data() );
 			IDCTask* taskPtr = cex::DeltaQueryInterface<IDCTask>(ptr.get());

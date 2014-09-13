@@ -88,7 +88,10 @@ namespace DCompute {
 			//  Wait while there are either requests or replies to process.
 			rc = zmq_poll (&items [0], 2, -1);
 			if (rc < 0)
+			{
+				if (_done) return 0;
 				return -1;
+			}
 
 			//  Process a request.
 			if (items [0].revents & ZMQ_POLLIN) {

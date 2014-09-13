@@ -34,8 +34,7 @@ public:
 
 	~Client()
 	{
-		zmq_close(_client);
-		zmq_term(_context);
+		join();
 	}
 
 	virtual void join()
@@ -57,13 +56,14 @@ protected:
 	UINT run()
 	{
 		//  发送请求并获取应答信息
-		zmq_send(_client, "HELLO", 5, 0);
+		zmq_send(_client, "HELLO", 6, 0);
 
 		char reply[100];
 		int size = zmq_recv(_client, reply, 100, 0);
 		if(size==-1)
 		{
 			int error_code = zmq_errno();
+			if (_done) return 0;
 			assert(false);
 			return -1;
 		}
@@ -95,8 +95,7 @@ public:
 
 	~Worker()
 	{
-		zmq_close(_worker);
-		zmq_term(_context);
+		join();
 	}
 
 	virtual void join()
@@ -105,6 +104,8 @@ public:
 
 		zmq_close(_worker);
 		zmq_term(_context);
+		_worker = 0;
+		_context = 0;
 
 		__super::join();
 	}
@@ -127,9 +128,11 @@ protected:
 			//  本例中空帧之前只有一帧，但可以有更多。
 			char address[1000];
 			int address_size = zmq_recv(_worker, address, 1000, 0);
-			if (address_size==-1)
+			//auto address = LRURouterMethod::ReciveAddress(_worker);
+			if (address_size==0)
 			{
 				int error_code = zmq_errno();
+				if (_done) return 0;
 				assert(false);
 				return -1;
 			}
@@ -146,7 +149,7 @@ protected:
 
 			zmq_send(_worker, address, address_size, ZMQ_SNDMORE);
 			zmq_send(_worker, "", 0, ZMQ_SNDMORE);
-			zmq_send(_worker, "OK", 2, 0);
+			zmq_send(_worker, "OK", 3, 0);
 
 			return 0;
 		}
@@ -179,8 +182,8 @@ CEX_TEST(LRUTest)
 		client[i].start();
 	}
 
-	Sleep(5000);
 
+	Sleep(5000);
 
 	for (int i=0; i<WORKERSIZE; ++i)
 	{
@@ -193,12 +196,14 @@ CEX_TEST(LRUTest)
 	}
 
 	router->join();
+
+	system("pause");
 }
 
 //  出队操作，使用一个可存储任何类型的数组实现
 #define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
 
-CEX_TEST_OFF(LRUTest0)
+CEX_TEST_OFF(LRUTest)
 {
 	std::string address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
 
@@ -233,7 +238,7 @@ CEX_TEST_OFF(LRUTest0)
 		client[i].start();
 	}
 
-	Sleep(1000);
+	//Sleep(1000);
 
 	//  LRU逻辑
 	//  - 一直从backend中获取消息；当有超过一个worker空闲时才从frontend获取消息。
@@ -318,6 +323,18 @@ CEX_TEST_OFF(LRUTest0)
 			DEQUEUE (worker_queue);
 			available_workers--;
 		}
+	}
+
+	Sleep(3000);
+
+	for (int i=0; i<CLIENTSIZE; ++i)
+	{
+		client[i].join();
+	}
+
+	for (int i=0; i<WORKERSIZE; ++i)
+	{
+		worker[i].join();
 	}
 
 	zmq_close (frontend);

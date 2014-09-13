@@ -119,10 +119,9 @@ namespace DCompute {
 		return addr;
 	}
 
-	int LRURouterMethod::SendAddress(void* socket, const char* addr)
+	int LRURouterMethod::SendAddress(void* socket, const char* addr, int size)
 	{
-		int len = strlen(addr);
-		int rc = zmq_send(socket,addr, len, ZMQ_SNDMORE);
+		int rc = zmq_send(socket,addr, size, ZMQ_SNDMORE);
 		assert(rc>=0);
 		rc = zmq_send (socket, "", 0, ZMQ_SNDMORE);
 		assert(rc>=0);
@@ -140,6 +139,8 @@ namespace DCompute {
 		return 0;
 	}
 
+	//#define DEQUEUE(q) memmove (&(q)[0], &(q)[1], sizeof (q) - sizeof (q [0]))
+
 	unsigned int CLRURouter::run()
 	{
 		zmq_msg_t msg;
@@ -156,10 +157,10 @@ namespace DCompute {
 
 		while (!_done) 
 		{
-			//rc = zmq_poll (&items [0], available_workers>0? 2: 1, -1);
-			rc = zmq_poll (&items [0], 2, -1);
+			rc = zmq_poll (&items[0], 2, -1);
 			if (rc < 0)
 			{
+				if (_done) return 0;
 				assert(false);
 				return -1;
 			}
@@ -167,13 +168,13 @@ namespace DCompute {
 			if (items [0].revents & ZMQ_POLLIN) 
 			{
 				std::shared_ptr<cex::IString> worker_addr = LRURouterMethod::ReciveAddress(_backend);
-				worker_queue.push(worker_addr->data()); 
+				worker_queue.push(std::string(worker_addr->data(),worker_addr->length())); 
 
 				std::shared_ptr<cex::IString> client_addr = LRURouterMethod::ReciveAddress(_backend);
 
 				if ( client_addr->compare("READY") != 0 ) 
 				{
-					LRURouterMethod::SendAddress(_frontend,  client_addr->data());
+					LRURouterMethod::SendAddress(_frontend,  client_addr->data(), client_addr->length());
 
 					rc = detail::ForwardMessage(_backend, _frontend, msg);
 					if (rc==-1) return rc;
@@ -188,7 +189,7 @@ namespace DCompute {
 					continue;
 				}
 
-				LRURouterMethod::SendAddress(_backend,  worker_queue.front().data());
+				LRURouterMethod::SendAddress(_backend,  worker_queue.front().data(), worker_queue.front().length());
 
 				rc = detail::ForwardMessage(_frontend, _backend, msg);
 				if (rc==-1) return rc;

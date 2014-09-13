@@ -35,7 +35,7 @@ namespace DCompute
 	public:
 		static std::shared_ptr<cex::IString> ReciveAddress(void* socket);
 
-		static int SendAddress(void* socket, const char* addr);
+		static int SendAddress(void* socket, const char* addr, int size);
 
 		static int SendReady(void* socket);
 

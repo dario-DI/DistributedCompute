@@ -119,6 +119,8 @@ public:
 
 		zmq_close(_worker);
 		zmq_term(_context);
+		_worker = 0;
+		_context = 0;
 
 		__super::join();
 	}

@@ -26,8 +26,7 @@ namespace DCompute {
 		{
 			_done = true;
 
-			zmq_close(_worker);
-			zmq_term(_context);
+			destory();
 
 			__super::join();
 		}
@@ -108,7 +107,12 @@ unsigned int CWorker::run()
 		std::shared_ptr<cex::IString> strTaskFile = Util::CreateUniqueTempFile();
 
 		bool nRet = ZmqEx::Recv2File(_worker, strTaskFile->data());
-		assert(nRet==true);
+		if (nRet == false)
+		{
+			if (_done) return 0;
+			assert(false);
+			return -1;
+		}
 
 		std::shared_ptr<cex::Interface> ptr = ReflectFile2Object( strTaskFile->data() );
 		IDCTask* taskPtr = cex::DeltaQueryInterface<IDCTask>(ptr.get());
@@ -117,7 +121,7 @@ unsigned int CWorker::run()
 		if (taskPtr==NULL)
 		{
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-			LRURouterMethod::SendAddress(_worker, client_addr->data());
+			LRURouterMethod::SendAddress(_worker, client_addr->data(), client_addr->length());
 #endif
 			char* errorMsg = "Type reflection error.";
 			int nRet = ZmqEx::Send(_worker, errorMsg, strlen(errorMsg));
@@ -139,7 +143,7 @@ unsigned int CWorker::run()
 		taskPtr->result2File(strResultFile->data());
 
 #if DCOMPUTE_ROUTE_TYPE == DCOMPUTE_ROUTE_LRU
-		LRURouterMethod::SendAddress(_worker, client_addr->data());
+		LRURouterMethod::SendAddress(_worker, client_addr->data(), client_addr->length());
 #endif
 
 		// send result

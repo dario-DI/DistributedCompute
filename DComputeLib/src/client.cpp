@@ -144,8 +144,7 @@ public:
 	{
 		_done = true;
 		
-		zmq_close(_client);
-		zmq_term(_context);
+		destory();
 
 		__super::join();
 	}
@@ -176,8 +175,6 @@ _client(0)
 
 CClientThread::~CClientThread()
 {
-	join();
-
 	destory();
 
 	Util::DeleteTempFile( _strTaskFile.data() );
