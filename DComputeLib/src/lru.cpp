@@ -109,7 +109,11 @@ namespace DCompute {
 
 		char worker_addr[30];
 		int size = zmq_recv (socket, worker_addr, 100, 0);
-		assert(size>0 && size<30);
+		if (size<=0)
+		{
+			return nullptr;
+		}
+		//assert(size>0 && size<30);
 		addr->assign(worker_addr, size);
 
 		char empty[2];

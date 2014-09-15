@@ -47,10 +47,13 @@ namespace DCompute { namespace Contract {
 			break;
 		}
 	}
+
 	//GF_BEGIN_SERIALIZE_IMPL_NOW(WorkerInfo, 1)
 	//GF_SERIALIZE_MEMBER(registType)
 	//GF_SERIALIZE_MEMBER(id)
 	//GF_END_SERIALIZE_IMPL
+
+	REGIST_DELTA_CREATOR(WorkerInfo, TDCTaskProxy<WorkerInfo>);
 } 
 
 }

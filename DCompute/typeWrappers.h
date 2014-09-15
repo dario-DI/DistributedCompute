@@ -42,6 +42,8 @@ namespace DCompute
 	public:
 		virtual ~ISerializable()=0 {}
 
+		virtual const char* IType_name() const=0;
+
 		virtual bool serializeObj(SERIALIZER_TYPE& ar)=0;
 
 
@@ -59,30 +61,41 @@ namespace DCompute
 	class TISerializableProxy : virtual public ISerializable, public Base
 	{
 	public:
+		virtual const char* IType_name() const
+		{
+			return typeid(Base).name();
+		}
+
 		virtual bool serializeObj(SERIALIZER_TYPE& ar)
 		{
-			ar & BOOST_SERIALIZATION_NVP(*this);
+			ar & BOOST_SERIALIZATION_NVP(getBase());
 			return true;
 		}
 
 		virtual std::shared_ptr<cex::IString> object2String()
 		{
-			return detail::MakeObject2String(*this);
+			return detail::MakeObject2String(getBase());
 		}
 
 		virtual void string2Object(const char* str)
 		{
-			detail::MakeString2Object(*this, str);
+			detail::MakeString2Object(getBase(), str);
 		}
 
 		virtual void object2File(const char* filename)
 		{
-			detail::MakeObject2File(*this, filename);
+			detail::MakeObject2File(getBase(), filename);
 		}
 
 		virtual void file2Object(const char* filename)
 		{
-			detail::MakeFile2Object(*this, filename);
+			detail::MakeFile2Object(getBase(), filename);
+		}
+
+	protected:
+		Base& getBase()
+		{
+			return *dynamic_cast<Base*>(this);
 		}
 	};
 
@@ -111,7 +124,7 @@ namespace DCompute
 	public:
 		virtual void Do()
 		{
-			this->Do();
+			Base::Do();
 		}
 
 		virtual std::shared_ptr<cex::IString> result2String()
@@ -222,7 +235,12 @@ namespace DCompute
 		std::shared_ptr<cex::Interface> obj = cex::DeltaCreateRef(typeName.data());
 		ISerializable* serializablePtr = cex::DeltaQueryInterface<ISerializable>(obj.get());
 
-		if ( serializablePtr==NULL ) return NULL;
+		if ( serializablePtr==NULL )
+		{
+			assert(false);	// the type is not based of ISerializable. 
+							// REGIST type using TISerializableProxy<type> of TDCTaskProxy<type>
+			return NULL;
+		}
 
 		serializablePtr->string2Object(str);
 
@@ -244,7 +262,12 @@ namespace DCompute
 		std::shared_ptr<cex::Interface> obj = cex::DeltaCreateRef(typeName.data());
 		ISerializable* serializablePtr = cex::DeltaQueryInterface<ISerializable>(obj.get());
 
-		if ( serializablePtr==NULL ) return NULL;
+		if ( serializablePtr==NULL )
+		{
+			assert(false);	// the type is not based of ISerializable. 
+							// REGIST type using TISerializableProxy<type> of TDCTaskProxy<type>
+			return NULL;
+		}
 
 		serializablePtr->file2Object(filename);
 

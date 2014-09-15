@@ -12,9 +12,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//CEX_RUN_TEST("LBTest");
 
-	CEX_RUN_TEST("LRUTest");
+	//CEX_RUN_TEST("LRUTest");
 
-	//CEX_RUN_TEST("TaskTest");
+	CEX_RUN_TEST("TaskTest");
 
 	system("pause");
 

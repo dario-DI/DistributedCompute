@@ -114,7 +114,7 @@ namespace DCompute
 		{
 			while( false == proxy.tryRecieveResult() )
 			{
-				Sleep(100);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));//Sleep(100);
 				nWaitTime+=100;
 
 				if (nWaitTime>maxWaitTimeForSingleTask) break;
@@ -161,7 +161,7 @@ namespace DCompute
 
 				while( false == proxy[i].tryRecieveResult() )
 				{
-					Sleep(100);
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));//Sleep(100);
 					nWaitTime+=100;
 
 					if (nWaitTime>maxWaitTimeForSingleTask) break;
@@ -223,7 +223,7 @@ namespace DCompute
 
 				if( false == proxy[i].tryRecieveResult() )
 				{
-					Sleep(100);
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));//Sleep(100);
 					vtWaitTime[i]+=100;
 				}
 				else

@@ -98,11 +98,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DComputeLib.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\client.cpp" />
     <ClCompile Include="src\contracts.cpp" />
     <ClCompile Include="src\joberServer.cpp" />
@@ -114,8 +109,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DCompute\config" />
-    <None Include="DComputeu.def" />
-    <None Include="DComputeud.def" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DCompute\client.h" />
@@ -129,7 +122,6 @@
     <ClInclude Include="..\DCompute\util.h" />
     <ClInclude Include="..\DCompute\worker.h" />
     <ClInclude Include="..\DCompute\zmqEx.h" />
-    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

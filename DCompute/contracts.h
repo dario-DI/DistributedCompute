@@ -19,7 +19,7 @@ namespace DCompute
 {
 	namespace Contract
 	{
-		class WorkerInfo
+		class WorkerInfo : public cex::Interface
 		{
 		public:
 			WorkerInfo();

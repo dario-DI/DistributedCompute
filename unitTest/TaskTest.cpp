@@ -54,7 +54,7 @@ GF_SERIALIZE_MEMBER(book)
 GF_END_SERIALIZE_IMPL
 
 GF_CLASS_VERSION(Task1, 1)
-REGIST_DELTA_CREATOR(Task1, Task1)
+REGIST_DELTA_CREATOR(Task1, TDCTaskProxy<Task1>)
 
 using namespace DCompute;
 
@@ -100,13 +100,13 @@ CEX_TEST(TaskTest)
 
 		assert(allResult==2*TASKSIZE);
 
+		system("pause");
+
 		for (int i=0; i<WORKERSIZE; ++i)
 		{
 			worker[i]->join();
 		}
 	}
-
-	Sleep(3000);
 
 	//Sleep(1000000000);
 
