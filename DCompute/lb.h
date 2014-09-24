@@ -1,5 +1,5 @@
 /// \file lb.h Copyright (C).
-/// \brief brief-description
+/// \brief Loading balance algorithm of router
 ///
 ///
 /// \note:

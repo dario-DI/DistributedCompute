@@ -54,9 +54,7 @@ namespace DCompute
 
 		virtual void start()=0;
 
-		virtual void join()=0;
-
-		
+		virtual void join()=0;	
 
 
 		virtual void setTaskFile(const char* filename)=0;

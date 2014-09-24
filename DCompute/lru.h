@@ -1,5 +1,5 @@
 /// \file lru.h Copyright (C).
-/// \brief brief-description
+/// \brief least recently used algorithm of router
 ///
 ///
 /// \note:

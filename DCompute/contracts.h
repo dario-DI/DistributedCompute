@@ -1,5 +1,5 @@
 /// \file contracts.h Copyright (C).
-/// \brief brief-description
+/// \brief data contract
 ///
 ///
 /// \note:
