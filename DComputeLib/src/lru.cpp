@@ -49,7 +49,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaInstance<IDComputeConfig>().getJoberAddress();
 
 		std::ostringstream oss;
 

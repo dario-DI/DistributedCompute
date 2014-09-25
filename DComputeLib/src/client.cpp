@@ -50,7 +50,7 @@ CClient::CClient() :
 _context(0),
 _client(0)
 {
-	_endPoint = cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint();
+	_endPoint = cex::DeltaInstance<IDComputeConfig>().getClientEndPoint();
 }
 
 CClient::~CClient()
@@ -186,7 +186,7 @@ bool CClientThread::create()
 	_context = zmq_init(1);
 
 	_client = zmq_socket (_context, ZMQ_REQ);
-	int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
+	int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>().getClientEndPoint());
 	assert(rc==0);
 	//int erro_code = zmq_errno();
 

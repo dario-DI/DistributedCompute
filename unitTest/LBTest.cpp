@@ -27,7 +27,7 @@ public:
 		sprintf(clientAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_CLIENT_PORT);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
+		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>().getClientEndPoint());
 		//int rc = zmq_connect(_client, clientAdress);
 		assert(rc==0);
 	}
@@ -99,7 +99,7 @@ public:
 		sprintf(workerAdress, "tcp://127.0.0.1:%d", DCOMPUTE_JOB_WORKER_PORT);
 
 		_worker = zmq_socket (_context, ZMQ_REP);
-		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
+		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>().getWorkerEndPoint());
 		//int rc = zmq_connect(_worker, workerAdress);
 		assert(rc==0);
 		//int jj = zmq_errno();

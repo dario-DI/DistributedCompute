@@ -90,7 +90,7 @@ namespace DCompute {
 	{
 		_context = zmq_init(1);
 
-		auto address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+		auto address = cex::DeltaInstance<IDComputeConfig>().getJoberAddress();
 		std::ostringstream ossm;
 		ossm << "tcp://" << address << ":" << DCOMPUTE_JOB_REPLY_PORT;
 		std::string replyAddr = ossm.str();

@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ReferencePath>D:\loadcode\boost_1_56_0\boost_1_56_0\stage\lib;..\debug\;$(ReferencePath)</ReferencePath>
-    <IncludePath>D:\loadcode\boost_1_56_0\boost_1_56_0;..\;..\..\cppextlib\;..\3rdparty\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\loadcode\boost_1_56_0\boost_1_56_0;..\;..\3rdparty\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

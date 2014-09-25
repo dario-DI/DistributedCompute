@@ -59,7 +59,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 		assert(rc==0);		
 
 		char message[30];
@@ -82,7 +82,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::regist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 
 		return task.result;
 		
@@ -93,7 +93,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -116,7 +116,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::unregist;
 		task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 
 		return task.result;
 	}
@@ -126,7 +126,7 @@ namespace DCompute {
 		/*void* context = zmq_init(1);
 
 		void* request = zmq_socket (context, ZMQ_REQ);
-		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		int rc = zmq_connect(request, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 		assert(rc==0);
 
 		char message[30];
@@ -149,7 +149,7 @@ namespace DCompute {
 		task.registType = Contract::WorkerInfo::getWorkerNumber;
 		//task.id = id;
 
-		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>()->getRequestEndPoint());
+		DoSingleTask(&task, cex::DeltaInstance<IDComputeConfig>().getRequestEndPoint());
 
 		return task.result;
 	}

@@ -27,7 +27,7 @@ public:
 		_context = zmq_init(1);
 
 		_client = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>()->getClientEndPoint());
+		int rc = zmq_connect(_client, cex::DeltaInstance<IDComputeConfig>().getClientEndPoint());
 		//int rc = zmq_connect(_client, "tcp://127.0.0.1:5559");
 		assert(rc==0);
 	}
@@ -86,7 +86,7 @@ public:
 		_context = zmq_init(1);
 
 		_worker = zmq_socket (_context, ZMQ_REQ);
-		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>()->getWorkerEndPoint());
+		int rc = zmq_connect(_worker, cex::DeltaInstance<IDComputeConfig>().getWorkerEndPoint());
 		//int rc = zmq_connect (_worker, "tcp://127.0.0.1:5560");
 		assert(rc==0);
 
@@ -205,7 +205,7 @@ CEX_TEST(LRUTest)
 
 CEX_TEST_OFF(LRUTest)
 {
-	std::string address = cex::DeltaInstance<IDComputeConfig>()->getJoberAddress();
+	std::string address = cex::DeltaInstance<IDComputeConfig>().getJoberAddress();
 
 	std::ostringstream oss;
 
