@@ -253,7 +253,7 @@ namespace cex
 	};
 
 	/// bool型变量
-	class CEX_API ConfigVarBooleanType : public ConfigVarTypeBase<bool>
+	class CEX_EXPORT_CLASS ConfigVarBooleanType : public ConfigVarTypeBase<bool>
 	{
 	public:
 		static std::string Value2String(const ValueType& value);
@@ -261,7 +261,7 @@ namespace cex
 	};
 
 	/// float/int型变量
-	class CEX_API ConfigVarFloatType : public ConfigVarTypeBase<float>
+	class CEX_EXPORT_CLASS ConfigVarFloatType : public ConfigVarTypeBase<float>
 	{
 	public:
 		static std::string Value2String(const ValueType& value);
@@ -269,7 +269,7 @@ namespace cex
 	};
 
 	/// string型变量
-	class CEX_API ConfigVarStringType : public ConfigVarTypeBase<std::string>
+	class CEX_EXPORT_CLASS ConfigVarStringType : public ConfigVarTypeBase<std::string>
 	{
 	public:
 		static std::string Value2String(const ValueType& value);
@@ -281,7 +281,7 @@ namespace cex
 	typedef IConfigVar<ConfigVarStringType> ConfigVarString;
 
 
-	class CEX_API VarRegisterUtil
+	class CEX_EXPORT_CLASS VarRegisterUtil
 	{
 	public:
 		static void SetVar( const std::string& varName, bool v);

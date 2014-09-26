@@ -2,9 +2,11 @@
 #define DCOMPUTE_CONFIG 1
 
 #ifndef DCOMPUTELIB_EXPORTS
-#define DCOMPUTE_API __declspec(dllimport)
+#define DCOMPUTE_EXPORT_CLASS	__declspec(dllimport)
+#define DCOMPUTE_API			extern "C" __declspec(dllimport)
 #else
-#define DCOMPUTE_API __declspec(dllexport)
+#define DCOMPUTE_EXPORT_CLASS	__declspec(dllexport)
+#define DCOMPUTE_API			extern "C" __declspec(dllexport)
 #endif
 
 #define DCOMPUTE_LIB_VERSION 0

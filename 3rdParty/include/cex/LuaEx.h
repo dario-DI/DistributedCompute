@@ -73,7 +73,7 @@ namespace cex
 #define LUA_DECL_WRAPPER( type_c, type_wrapper ) \
 	typedef cex::luaUserdataWrapper<type_c> type_wrapper;
 
-	class CEX_API LuaEx
+	class CEX_EXPORT_CLASS LuaEx
 	{
 	public:
 		/** make do file. */
@@ -106,7 +106,7 @@ namespace cex
 		static void ShowErrorInfo(int nType=0);
 	};
 
-	class CEX_API LuaState
+	class CEX_EXPORT_CLASS LuaState
 	{
 	public:
 

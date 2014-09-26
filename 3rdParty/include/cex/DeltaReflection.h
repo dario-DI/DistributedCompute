@@ -512,7 +512,7 @@ namespace cex
 	
 
 	// 对象生命周期管理者容器
-	class CEX_API DeltaRefPtrContainer
+	class CEX_EXPORT_CLASS DeltaRefPtrContainer
 	{
 	public:
 		typedef std::vector<std::shared_ptr<Interface> > SysRefPtrContainerType;

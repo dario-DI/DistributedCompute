@@ -1,7 +1,7 @@
 /// \file Delegate.hpp Copyright (C)
 /// \brief delegate implement in c++
 ///
-///	Delegate<bool(const string&)> myDelegate;
+///	Delegate(bool(const string&)) myDelegate;
 /// myDelegate += [](const string& v){return true;}
 ///
 /// \note: 

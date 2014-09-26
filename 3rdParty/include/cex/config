@@ -7,9 +7,11 @@
 #endif
 
 #ifndef CPPEXTLIB_EXPORTS
-#define CEX_API __declspec(dllimport)
+#define CEX_EXPORT_CLASS	__declspec(dllimport)
+#define CEX_API				extern "C" __declspec(dllimport)
 #else
-#define CEX_API __declspec(dllexport)
+#define CEX_EXPORT_CLASS 	__declspec(dllexport)
+#define CEX_API extern		"C" __declspec(dllexport)
 #endif
 
 #define _3RDPARTY_PATH_ "..\\3rdParty\\lua\\"

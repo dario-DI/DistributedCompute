@@ -16,7 +16,7 @@
 
 namespace DCompute 
 {
-	class DCOMPUTE_API Util
+	class DCOMPUTE_EXPORT_CLASS Util
 	{
 	public:
 		static int RegistWorker(const char* id);

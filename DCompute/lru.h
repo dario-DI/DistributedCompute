@@ -30,7 +30,7 @@ namespace DCompute
 		
 	};
 
-	class DCOMPUTE_API LRURouterMethod
+	class DCOMPUTE_EXPORT_CLASS LRURouterMethod
 	{
 	public:
 		static std::shared_ptr<cex::IString> ReciveAddress(void* socket);

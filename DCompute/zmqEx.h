@@ -16,7 +16,7 @@
 
 namespace DCompute 
 {
-	class DCOMPUTE_API ZmqEx
+	class DCOMPUTE_EXPORT_CLASS ZmqEx
 	{
 	public:
 		static std::shared_ptr<cex::IString> Recv(void *socket, int flags=0 );
