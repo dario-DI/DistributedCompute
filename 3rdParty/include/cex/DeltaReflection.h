@@ -2,7 +2,7 @@
 /// \brief 
 ///  providing any type reflection by string key, or even by unsigned int key(string hash code).
 ///  providing easy using interface creating like COM that can be safely using in different modules.
-///  providing singleton pattern implementation, which is an interface that mapping its implement.
+///  providing singleton pattern implementation.
 ///
 /// \note:
 /// \author: DI
@@ -110,72 +110,33 @@ namespace cex
 	template<typename KeyType_,
 		typename ValueType_,
 		typename uniqueType_=int>
-	class KeyValueRegister
+	class ITKeyValueRegister
 	{
 	public:
 		typedef KeyType_ KeyType;
 		typedef ValueType_ ValueType;
 
-		typedef std::map<KeyType, ValueType> TYPE_MAP;
+		virtual ~ITKeyValueRegister()=0{}
 
-		void Regist(const KeyType& key, const ValueType& value)
-		{
-			_map[key]=value;
-		}
+		virtual void Regist(const KeyType& key, const ValueType& value)=0;
 
-		void UnRegist(const KeyType& key)
-		{
-			TYPE_MAP::iterator itr = _map.begin();
-			for ( ; itr != _map.end(); ++itr )
-			{
-				if ( itr->first == key )
-				{
-					_map.erase( itr );
-					return;
-				}
-			}
-		}
+		virtual void UnRegist(const KeyType& key)=0;
 
-		typename ValueType& Get(const KeyType& key)
-		{
-			TYPE_MAP::iterator itr = _map.find( key );
-			if ( itr != _map.end() )
-			{
-				return itr->second;
-			}
+		virtual typename ValueType& Get(const KeyType& key)=0;
 
-			//assert(false);
-			//std::cout << "DeltaReflection.h: KeyValueRegister: invalid key: " << key << std::endl;
-			throw( std::invalid_argument( "DeltaReflection.h: KeyValueRegister: invalid key." ) );
-		}
-
-		typename const ValueType& Get(const KeyType& key) const
-		{
-			TYPE_MAP::iterator itr = _map.find( key );
-			if ( itr != _map.end() )
-			{
-				return itr->second;
-			}
-
-			//assert(false);
-			//std::cout << "DeltaReflection.h: KeyValueRegister: invalid key: " << key << std::endl;
-			throw( std::invalid_argument( "DeltaReflection.h: KeyValueRegister: invalid key." ) );
-		}
-
-		typename TYPE_MAP& Map() { return _map; }
-
-		typename const TYPE_MAP& Map() const { return _map; }
-
-	private:
-		TYPE_MAP _map;
+		virtual typename const ValueType& Get(const KeyType& key) const=0;
 	};
 
 	/// delta register
 	struct UniqueTypeofDeltaRegister {};
-	typedef KeyValueRegister<size_t, boost::any, UniqueTypeofDeltaRegister> UIntDeltaRegister;
-	CEX_API  UIntDeltaRegister& __stdcall UIntDeltaRegisterSingleton();
-	typedef KeyValueRegister<std::string, boost::any, UniqueTypeofDeltaRegister> StringDeltaRegister;
-	CEX_API StringDeltaRegister& __stdcall StringDeltaRegisterSingleton();
+
+	typedef ITKeyValueRegister<size_t, boost::any, UniqueTypeofDeltaRegister> IUIntDeltaRegister;
+	CEX_API  IUIntDeltaRegister& __stdcall UIntDeltaRegisterSingleton();
+	typedef ITKeyValueRegister<std::string, boost::any, UniqueTypeofDeltaRegister> IStringDeltaRegister;
+	CEX_API IStringDeltaRegister& __stdcall StringDeltaRegisterSingleton();
+
+	CEX_EXPORT_CLASS std::shared_ptr<IUIntDeltaRegister>	__stdcall createUIntDeltaRegister();
+	CEX_EXPORT_CLASS std::shared_ptr<IStringDeltaRegister>	__stdcall createStringDeltaRegister();
 
 	namespace df 
 	{
@@ -184,8 +145,10 @@ namespace cex
 		struct TTypeTraits
 		{
 			typedef std::string KeyType;
-			typedef StringDeltaRegister RegType;
+			typedef std::shared_ptr<IStringDeltaRegister> RegPointerType;
+			typedef RegPointerType::element_type RegType;
 			static RegType& Instance() { return StringDeltaRegisterSingleton(); }
+			static RegPointerType CreateRegRef() { return createStringDeltaRegister(); }
 
 			static std::string Convert(const std::string& key)
 			{
@@ -226,8 +189,10 @@ namespace cex
 		struct TTypeTraits<size_t>
 		{
 			typedef size_t KeyType;
-			typedef UIntDeltaRegister RegType;
+			typedef std::shared_ptr<IUIntDeltaRegister> RegPointerType;
+			typedef RegPointerType::element_type RegType;
 			static RegType& Instance() { return UIntDeltaRegisterSingleton(); }
+			static RegPointerType CreateRegRef() { return createUIntDeltaRegister(); }
 
 			static size_t Convert(size_t key)
 			{
@@ -240,8 +205,10 @@ namespace cex
 		struct TTypeTraits<int>
 		{
 			typedef size_t KeyType;
-			typedef UIntDeltaRegister RegType;
+			typedef std::shared_ptr<IUIntDeltaRegister> RegPointerType;
+			typedef RegPointerType::element_type RegType;
 			static RegType& Instance() { return UIntDeltaRegisterSingleton(); }
+			static RegPointerType CreateRegRef() { return createUIntDeltaRegister(); }
 
 			static size_t Convert(int key)
 			{
@@ -254,8 +221,7 @@ namespace cex
 
 		// template cast
 		template<typename DeltaType, typename KeyType>
-		DeltaType TGetRegValue(
-			KeyValueRegister<KeyType, boost::any, UniqueTypeofDeltaRegister>& reg,
+		DeltaType TGetRegValue(typename TTypeTraits<KeyType>::RegType& reg,
 			const KeyType& key)
 		{
 			try
@@ -271,8 +237,7 @@ namespace cex
 		}
 
 		template<typename DeltaType, typename KeyType>
-		DeltaType* TGetRegValuePTR(
-			KeyValueRegister<KeyType, boost::any, UniqueTypeofDeltaRegister>& reg,
+		DeltaType* TGetRegValuePTR(typename TTypeTraits<KeyType>::RegType& reg,
 			const KeyType& key)
 		{
 			try
@@ -307,15 +272,15 @@ namespace cex
 	template<typename DeltaType, typename libKeyType, typename valueKeyType>
 	DeltaType DeltaCast(const libKeyType& libKey, const valueKeyType& valueKey)
 	{
-		typedef df::TTypeTraits<valueKeyType>::RegType RegType;
+		typedef df::TTypeTraits<valueKeyType> RegTypeTraits;
 
 		try
 		{
-			RegType* valueReg = DeltaPTRCast<RegType>(libKey);
+			RegTypeTraits::RegPointerType valueReg = DeltaCast<RegTypeTraits::RegPointerType>(libKey);
 
 			if (valueReg!=NULL)
 			{
-				return df::TGetRegValue<DeltaType>(*valueReg, 
+				return df::TGetRegValue<DeltaType>(*valueReg.get(), 
 					df::TTypeTraits<valueKeyType>::Convert(valueKey));
 			}
 			else
@@ -333,15 +298,15 @@ namespace cex
 	template<typename DeltaType, typename libKeyType, typename valueKeyType>
 	DeltaType* DeltaPTRCast(const libKeyType& libKey, const valueKeyType& valueKey)
 	{
-		typedef df::TTypeTraits<valueKeyType>::RegType RegType;
+		typedef df::TTypeTraits<valueKeyType> RegTypeTraits;
 
 		try
 		{
-			RegType* valueReg = DeltaPTRCast<RegType>(libKey);
+			RegTypeTraits::RegPointerType valueReg = DeltaCast<RegTypeTraits::RegPointerType>(libKey);
 
 			if (valueReg!=NULL)
 			{
-				return df::TGetRegValuePTR<DeltaType>(*valueReg,
+				return df::TGetRegValuePTR<DeltaType>(*valueReg.get(),
 					df::TTypeTraits<valueKeyType>::Convert(valueKey));
 			}
 			else
@@ -363,14 +328,14 @@ namespace cex
 		void Register(const KeyType& key, const DeltaType& value)
 		{
 			typedef df::TTypeTraits<KeyType> Traits;
-#ifdef _DEBUG
+#ifdef CEX_TEST_KEY_DUP
 			try
 			{
 				Traits::Instance().Get(Traits::Convert(key));
 				assert(false); // the same named value has already registered.
 				return;
 			}
-			catch(std::exception e)
+			catch(std::exception)
 			{
 				// normal
 			}
@@ -392,29 +357,29 @@ namespace cex
 			typedef df::TTypeTraits<valueKeyType> ValueTraits;
 
 			// find library register
-			ValueTraits::RegType* reg = NULL;
+			ValueTraits::RegPointerType reg = NULL;
 			try
 			{
-				reg = DeltaPTRCast<ValueTraits::RegType>(LibTraits::Convert(libKey));
+				reg = DeltaCast<ValueTraits::RegPointerType>(LibTraits::Convert(libKey));
 			}
 			catch(std::exception e)
 			{
 				// no register for this lib key, just register
-				LibTraits::Instance().Regist(LibTraits::Convert(libKey), ValueTraits::RegType());
-				reg = DeltaPTRCast<ValueTraits::RegType>(LibTraits::Convert(libKey));
+				LibTraits::Instance().Regist(LibTraits::Convert(libKey), ValueTraits::CreateRegRef());
+				reg = DeltaCast<ValueTraits::RegPointerType>(LibTraits::Convert(libKey));
 			}
 			
 			assert(reg != NULL);
 
 			// register value to the lib register
-#ifdef _DEBUG
+#ifdef CEX_TEST_KEY_DUP
 			try
 			{
-				ValueTraits::RegType::ValueType& r = reg->Get(ValueTraits::Convert(valueKey));
+				reg->Get(ValueTraits::Convert(valueKey));
 				assert(false); // the same named value has already registered.
 				return;
 			}
-			catch(std::exception e)
+			catch(std::exception)
 			{
 				// normal
 			}
@@ -429,10 +394,10 @@ namespace cex
 			typedef df::TTypeTraits<valueKeyType> ValueTraits;
 
 			// find library register
-			ValueTraits::RegType* reg = NULL;
+			ValueTraits::RegPointerType reg = NULL;
 			try
 			{
-				reg = DeltaPTRCast<ValueTraits::RegType>(LibTraits::Convert(libKey));
+				reg = DeltaCast<ValueTraits::RegPointerType>(LibTraits::Convert(libKey));
 			}
 			catch(std::exception e)
 			{
